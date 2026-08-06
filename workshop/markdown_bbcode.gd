@@ -27,7 +27,7 @@ func body(markdown: String) -> String:
 
 
 func _inline(value: String) -> String:
-	var safe := value.replace("[", "[lb]").replace("]", "[rb]")
+	var safe := value.replace("[", "[lb]")
 	safe = _strong_regex.sub(safe, "[b][color=%s]$1[/color][/b]" % STRONG_COLOR, true)
 	safe = _code_regex.sub(safe, "[color=%s][code]$1[/code][/color]" % INLINE_CODE_COLOR, true)
 	return safe
