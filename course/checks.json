@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "defaults": {
+    "visual": {
+      "sample_size": 64,
+      "mean_error": 0.006,
+      "pixel_error": 0.035,
+      "max_bad_pixel_ratio": 0.02,
+      "settle_frames": 4
+    },
+    "contracts": {
+      "required": [],
+      "forbidden": []
+    },
+    "manual_checklist": []
+  },
+  "exercises": {
+    "01_first_fragment": {"mode":"visual"},
+    "02_uniform_console": {
+      "mode":"visual_contract",
+      "contracts":{"required":[{"label":"声明可编辑的 ink_color uniform","pattern":"uniform\\s+vec4\\s+ink_color"}]}
+    },
+    "03_mesh_attributes": {"mode":"visual"},
+    "04_coordinate_spaces": {"mode":"visual"},
+    "05_pipeline_handoff": {
+      "mode":"visual_contract",
+      "contracts":{"required":[{"label":"使用 varying 跨阶段传递高度","pattern":"varying\\s+float\\s+vertex_height"}]}
+    },
+    "06_world_gradient": {"mode":"visual"},
+    "07_tangent_space": {"mode":"visual"},
+    "08_mix_mask_alpha": {"mode":"visual"},
+    "09_billboard": {
+      "mode":"visual_manual",
+      "manual_checklist":["旋转相机后，四边形仍面向相机","缩放模型不会破坏朝向"]
+    },
+    "10_custom_matrix": {"mode":"visual"},
+    "11_material_channels": {
+      "mode":"visual_contract",
+      "contracts":{"required":[
+        {"label":"暴露 roughness_value","pattern":"uniform\\s+float\\s+roughness_value"},
+        {"label":"暴露 metallic_value","pattern":"uniform\\s+float\\s+metallic_value"}
+      ]}
+    },
+    "12_lambert": {"mode":"visual"},
+    "13_dot_probe": {"mode":"visual"},
+    "14_blinn_phong": {"mode":"visual"},
+    "15_linear_srgb": {"mode":"visual"},
+    "16_fresnel": {"mode":"visual"},
+    "17_anisotropy": {
+      "mode":"visual_manual",
+      "manual_checklist":["高光沿一个切线方向明显拉长","旋转预览时高光连续移动而不闪烁"]
+    },
+    "18_hemisphere_include": {
+      "mode":"visual_contract",
+      "contracts":{"required":[{"label":"引用共享光照 include","pattern":"#include\\s+\"res://shared/shaders/atlas_lighting\\.gdshaderinc\""}]}
+    },
+    "19_normal_mapping": {"mode":"visual"},
+    "20_sdf_shapes": {"mode":"visual"},
+    "21_procedural_character": {"mode":"visual"},
+    "22_time_animation": {"mode":"visual"},
+    "23_vertex_deformation": {"mode":"visual"},
+    "24_ui_sweep": {"mode":"visual"},
+    "25_rotation_matrix": {"mode":"visual"},
+    "26_quaternion": {
+      "mode":"visual_manual",
+      "manual_checklist":["改变旋转轴后仍保持刚体形状","角度正负变化时旋转方向相反"]
+    },
+    "27_gameboy_post": {"mode":"visual"},
+    "28_shadertoy_port": {"mode":"visual"},
+    "29_distance_fade": {
+      "mode":"visual_manual",
+      "visual":{"mean_error":0.003,"max_bad_pixel_ratio":0.012},
+      "manual_checklist":["相机靠近时物体更不透明","相机越过 fade_far 后几乎不可见"]
+    },
+    "30_ray_marching": {"mode":"visual","visual":{"mean_error":0.008,"max_bad_pixel_ratio":0.04}},
+    "31_stencil_portal": {
+      "mode":"manual_contract",
+      "contracts":{"required":[{"label":"读取模板值 1","pattern":"stencil_mode\\s+read\\s*,\\s*compare_equal\\s*,\\s*1"}]},
+      "manual_checklist":["门户内容只出现在写入模板值 1 的区域","移动遮罩时边缘与遮罩几何保持一致","门户之外的场景深度关系正常"]
+    },
+    "32_signal_storm": {
+      "mode":"visual_manual",
+      "visual":{"mean_error":0.008,"max_bad_pixel_ratio":0.04},
+      "manual_checklist":["顶点脉动、边缘光和溶解同时可辨认","调节 dissolve_threshold 时边缘连续推进","能够说明每项计算所处的坐标空间"]
+    }
+  }
+}

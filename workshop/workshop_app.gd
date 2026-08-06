@@ -1,0 +1,824 @@
+class_name WorkshopApp
+extends Control
+
+const CourseSessionScript = preload("res://workshop/course_session.gd")
+const AtlasThemeScript = preload("res://workshop/atlas_theme.gd")
+const AtlasButtonScript = preload("res://workshop/atlas_button.gd")
+const MarkdownBBCodeScript = preload("res://workshop/markdown_bbcode.gd")
+const CalibratedPreviewScript = preload("res://workshop/calibrated_preview.gd")
+const PreviewFixtureScript = preload("res://workshop/preview_fixture.gd")
+
+var session
+var markdown
+var reference_fixture
+
+var nav_panel: PanelContainer
+var lesson_panel: PanelContainer
+var nav_list: VBoxContainer
+var nav_rows: Dictionary = {}
+var progress_bar: ProgressBar
+var progress_count: Label
+var asset_status_label: Label
+
+var breadcrumb_label: Label
+var source_path_label: Label
+var exercise_meta_label: Label
+var exercise_state_label: Label
+var exercise_title_label: Label
+var lesson_lead: RichTextLabel
+var lesson_scroll: ScrollContainer
+var lesson_sections: VBoxContainer
+var hint_button: Button
+var reset_button: Button
+var previous_button: Button
+var next_button: Button
+var reset_panel: PanelContainer
+var reset_copy: Label
+
+var preview_kind_label: Label
+var calibrated_preview
+var manual_panel: PanelContainer
+var manual_list: VBoxContainer
+var manual_checks: Array[CheckBox] = []
+var status_panel: PanelContainer
+var status_dot_style: StyleBoxFlat
+var status_label: Label
+var validate_button: Button
+var solution_button: Button
+
+var validation_busy := false
+var reset_armed := false
+
+
+func _ready() -> void:
+	theme = AtlasThemeScript.create()
+	markdown = MarkdownBBCodeScript.new()
+	_build_shell()
+	_build_session()
+	resized.connect(_apply_responsive_layout)
+	_apply_responsive_layout()
+	call_deferred("_initialize_session")
+
+
+func _build_session() -> void:
+	session = CourseSessionScript.new()
+	add_child(session)
+	session.exercise_changed.connect(_on_exercise_changed)
+	session.source_external_changed.connect(_on_source_external_changed)
+	session.progress_changed.connect(_on_progress_changed)
+	session.session_error.connect(_on_session_error)
+	session.session_ready.connect(_on_session_ready)
+
+	reference_fixture = PreviewFixtureScript.new()
+	reference_fixture.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	add_child(reference_fixture)
+
+
+func _initialize_session() -> void:
+	_set_status("正在载入课程目录与本机进度", "pending")
+	if not session.initialize():
+		return
+	_build_navigation()
+	_refresh_progress()
+	_refresh_navigation_state()
+
+
+func _build_shell() -> void:
+	var canvas := PanelContainer.new()
+	canvas.theme_type_variation = "CanvasPanel"
+	canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(canvas)
+
+	var shell := HBoxContainer.new()
+	shell.add_theme_constant_override("separation", 0)
+	canvas.add_child(shell)
+
+	_build_navigation_panel(shell)
+	_build_workspace(shell)
+
+
+func _build_navigation_panel(parent: HBoxContainer) -> void:
+	nav_panel = PanelContainer.new()
+	nav_panel.theme_type_variation = "SidebarPanel"
+	nav_panel.custom_minimum_size = Vector2(252.0, 0.0)
+	nav_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	parent.add_child(nav_panel)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 0)
+	nav_panel.add_child(column)
+
+	var brand_row := HBoxContainer.new()
+	brand_row.add_theme_constant_override("separation", 12)
+	var brand_signal := _make_dot(AtlasThemeScript.SIGNAL_AMBER, 10.0)
+	brand_row.add_child(brand_signal)
+
+	var brand_copy := VBoxContainer.new()
+	brand_copy.add_theme_constant_override("separation", 2)
+	var brand := Label.new()
+	brand.text = "SHADER ATLAS"
+	brand.theme_type_variation = "AppMark"
+	brand_copy.add_child(brand)
+	var brand_subtitle := Label.new()
+	brand_subtitle.text = "GODOT GPU WORKSHOP"
+	brand_subtitle.theme_type_variation = "MonoLabel"
+	brand_copy.add_child(brand_subtitle)
+	brand_row.add_child(brand_copy)
+	column.add_child(_margin_wrap(brand_row, 16, 18, 16, 16))
+	column.add_child(_make_divider())
+
+	var progress_column := VBoxContainer.new()
+	progress_column.add_theme_constant_override("separation", 8)
+	var progress_header := HBoxContainer.new()
+	var progress_title := Label.new()
+	progress_title.text = "课程进度"
+	progress_title.theme_type_variation = "SecondaryLabel"
+	progress_header.add_child(progress_title)
+	progress_header.add_spacer(false)
+	progress_count = Label.new()
+	progress_count.text = "00 / 32"
+	progress_count.theme_type_variation = "MonoLabel"
+	progress_header.add_child(progress_count)
+	progress_column.add_child(progress_header)
+	progress_bar = ProgressBar.new()
+	progress_bar.min_value = 0.0
+	progress_bar.max_value = 32.0
+	progress_bar.value = 0.0
+	progress_bar.show_percentage = false
+	progress_bar.custom_minimum_size = Vector2(0.0, 7.0)
+	progress_column.add_child(progress_bar)
+	column.add_child(_margin_wrap(progress_column, 16, 14, 16, 14))
+	column.add_child(_make_divider())
+
+	var nav_scroll := ScrollContainer.new()
+	nav_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	nav_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	nav_scroll.follow_focus = true
+	column.add_child(nav_scroll)
+	nav_list = VBoxContainer.new()
+	nav_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	nav_list.add_theme_constant_override("separation", 2)
+	nav_scroll.add_child(_margin_wrap(nav_list, 10, 12, 10, 12))
+
+	column.add_child(_make_divider())
+	var footer := VBoxContainer.new()
+	footer.add_theme_constant_override("separation", 5)
+	var engine_label := Label.new()
+	engine_label.text = "GODOT 4.7.1 · FORWARD+"
+	engine_label.theme_type_variation = "MonoLabel"
+	footer.add_child(engine_label)
+	asset_status_label = Label.new()
+	asset_status_label.text = "正在检查私人素材"
+	asset_status_label.theme_type_variation = "MutedLabel"
+	footer.add_child(asset_status_label)
+	column.add_child(_margin_wrap(footer, 16, 12, 16, 14))
+
+
+func _build_workspace(parent: HBoxContainer) -> void:
+	var work_column := VBoxContainer.new()
+	work_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	work_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	work_column.add_theme_constant_override("separation", 0)
+	parent.add_child(work_column)
+
+	_build_top_bar(work_column)
+	work_column.add_child(_make_divider())
+
+	var split := HSplitContainer.new()
+	split.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	split.add_theme_constant_override("separation", 1)
+	work_column.add_child(split)
+
+	_build_lesson_panel(split)
+	_build_preview_panel(split)
+
+
+func _build_top_bar(parent: VBoxContainer) -> void:
+	var top_bar := PanelContainer.new()
+	top_bar.theme_type_variation = "WorkPanel"
+	top_bar.custom_minimum_size = Vector2(0.0, 56.0)
+	parent.add_child(top_bar)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	breadcrumb_label = Label.new()
+	breadcrumb_label.text = "M-- / --"
+	breadcrumb_label.theme_type_variation = "AmberLabel"
+	row.add_child(breadcrumb_label)
+	row.add_spacer(false)
+	source_path_label = Label.new()
+	source_path_label.text = "正在定位 exercise.gdshader"
+	source_path_label.theme_type_variation = "MonoLabel"
+	source_path_label.clip_text = true
+	source_path_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	source_path_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(source_path_label)
+	var copy_button := _new_button("复制路径", "QuietButton")
+	copy_button.tooltip_text = "复制当前 Shader 的绝对路径"
+	copy_button.pressed.connect(_copy_source_path)
+	row.add_child(copy_button)
+	var open_button := _new_button("打开 Shader", "QuietButton")
+	open_button.tooltip_text = "使用系统关联程序打开当前练习文件"
+	open_button.pressed.connect(_open_source)
+	row.add_child(open_button)
+	top_bar.add_child(_margin_wrap(row, 16, 8, 16, 8))
+
+
+func _build_lesson_panel(parent: HSplitContainer) -> void:
+	lesson_panel = PanelContainer.new()
+	lesson_panel.theme_type_variation = "WorkPanel"
+	lesson_panel.custom_minimum_size = Vector2(456.0, 0.0)
+	parent.add_child(lesson_panel)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	lesson_panel.add_child(_margin_wrap(column, 20, 18, 20, 16))
+
+	var meta_row := HBoxContainer.new()
+	exercise_meta_label = Label.new()
+	exercise_meta_label.text = "MODULE -- · EXERCISE --"
+	exercise_meta_label.theme_type_variation = "MonoLabel"
+	meta_row.add_child(exercise_meta_label)
+	meta_row.add_spacer(false)
+	exercise_state_label = Label.new()
+	exercise_state_label.text = "载入中"
+	exercise_state_label.theme_type_variation = "AmberLabel"
+	meta_row.add_child(exercise_state_label)
+	column.add_child(meta_row)
+
+	exercise_title_label = Label.new()
+	exercise_title_label.text = "正在校准课程"
+	exercise_title_label.theme_type_variation = "ExerciseTitle"
+	exercise_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(exercise_title_label)
+
+	lesson_lead = RichTextLabel.new()
+	lesson_lead.bbcode_enabled = true
+	lesson_lead.fit_content = true
+	lesson_lead.scroll_active = false
+	lesson_lead.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lesson_lead.text = "读取目录、讲义与本机进度。"
+	column.add_child(lesson_lead)
+	column.add_child(_make_divider())
+
+	lesson_scroll = ScrollContainer.new()
+	lesson_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lesson_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	lesson_scroll.follow_focus = true
+	column.add_child(lesson_scroll)
+	lesson_sections = VBoxContainer.new()
+	lesson_sections.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lesson_sections.add_theme_constant_override("separation", 18)
+	lesson_scroll.add_child(lesson_sections)
+
+	reset_panel = PanelContainer.new()
+	reset_panel.theme_type_variation = "RaisedPanel"
+	reset_panel.visible = false
+	column.add_child(reset_panel)
+	var reset_row := HBoxContainer.new()
+	reset_row.add_theme_constant_override("separation", 10)
+	reset_copy = Label.new()
+	reset_copy.text = "当前代码会先备份，再恢复 starter。"
+	reset_copy.theme_type_variation = "SecondaryLabel"
+	reset_copy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	reset_copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reset_row.add_child(reset_copy)
+	var cancel_reset := _new_button("取消", "QuietButton")
+	cancel_reset.pressed.connect(_cancel_reset)
+	reset_row.add_child(cancel_reset)
+	var confirm_reset := _new_button("确认重置", "DangerButton")
+	confirm_reset.pressed.connect(_confirm_reset)
+	reset_row.add_child(confirm_reset)
+	reset_panel.add_child(_margin_wrap(reset_row, 12, 10, 12, 10))
+
+	column.add_child(_make_divider())
+	var action_row := HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", 8)
+	previous_button = _new_button("上一题", "QuietButton")
+	previous_button.pressed.connect(_go_previous)
+	action_row.add_child(previous_button)
+	next_button = _new_button("下一题", "QuietButton")
+	next_button.pressed.connect(_go_next)
+	action_row.add_child(next_button)
+	action_row.add_spacer(false)
+	hint_button = _new_button("提示 0/3", "QuietButton")
+	hint_button.tooltip_text = "逐级揭示提示，快捷键 H"
+	hint_button.pressed.connect(_reveal_hint)
+	action_row.add_child(hint_button)
+	reset_button = _new_button("重置", "QuietButton")
+	reset_button.tooltip_text = "进入可恢复的重置确认，快捷键 Ctrl+R"
+	reset_button.pressed.connect(_arm_reset)
+	action_row.add_child(reset_button)
+	column.add_child(action_row)
+
+
+func _build_preview_panel(parent: HSplitContainer) -> void:
+	var preview_panel := PanelContainer.new()
+	preview_panel.theme_type_variation = "CanvasPanel"
+	preview_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(preview_panel)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	preview_panel.add_child(_margin_wrap(column, 16, 14, 16, 16))
+
+	var heading := HBoxContainer.new()
+	heading.add_theme_constant_override("separation", 8)
+	heading.add_child(_make_dot(AtlasThemeScript.SIGNAL_AMBER, 7.0))
+	var live_label := Label.new()
+	live_label.text = "LIVE SIGNAL"
+	live_label.theme_type_variation = "SectionHeading"
+	heading.add_child(live_label)
+	preview_kind_label = Label.new()
+	preview_kind_label.text = "等待夹具"
+	preview_kind_label.theme_type_variation = "MonoLabel"
+	heading.add_child(preview_kind_label)
+	heading.add_spacer(false)
+	var reload_button := _new_button("重新载入", "QuietButton")
+	reload_button.tooltip_text = "从磁盘重新载入当前 Shader"
+	reload_button.pressed.connect(_reload_source)
+	heading.add_child(reload_button)
+	column.add_child(heading)
+
+	calibrated_preview = CalibratedPreviewScript.new()
+	calibrated_preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	calibrated_preview.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(calibrated_preview)
+
+	manual_panel = PanelContainer.new()
+	manual_panel.theme_type_variation = "RaisedPanel"
+	manual_panel.visible = false
+	column.add_child(manual_panel)
+	manual_list = VBoxContainer.new()
+	manual_list.add_theme_constant_override("separation", 6)
+	manual_panel.add_child(_margin_wrap(manual_list, 12, 10, 12, 10))
+
+	status_panel = PanelContainer.new()
+	status_panel.theme_type_variation = "RaisedPanel"
+	status_panel.custom_minimum_size = Vector2(0.0, 48.0)
+	column.add_child(status_panel)
+	var status_row := HBoxContainer.new()
+	status_row.add_theme_constant_override("separation", 10)
+	var status_dot := PanelContainer.new()
+	status_dot.custom_minimum_size = Vector2(7.0, 7.0)
+	status_dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	status_dot_style = _dot_style(AtlasThemeScript.TEXT_MUTED, 7.0)
+	status_dot.add_theme_stylebox_override("panel", status_dot_style)
+	status_row.add_child(status_dot)
+	status_label = Label.new()
+	status_label.text = "等待课程载入"
+	status_label.theme_type_variation = "SecondaryLabel"
+	status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	status_label.clip_text = true
+	status_row.add_child(status_label)
+	status_panel.add_child(_margin_wrap(status_row, 12, 6, 12, 6))
+
+	var action_row := HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", 8)
+	solution_button = _new_button("打开参考解答", "QuietButton")
+	solution_button.tooltip_text = "在系统关联程序中打开独立参考解答"
+	solution_button.pressed.connect(_open_solution)
+	action_row.add_child(solution_button)
+	action_row.add_spacer(false)
+	validate_button = _new_button("运行验证  Ctrl+Enter", "PrimaryButton")
+	validate_button.custom_minimum_size.x = 176.0
+	validate_button.pressed.connect(_run_validation)
+	action_row.add_child(validate_button)
+	column.add_child(action_row)
+
+
+func _build_navigation() -> void:
+	_clear_children(nav_list)
+	nav_rows.clear()
+	for module_data in session.repository.modules:
+		var module_header := HBoxContainer.new()
+		module_header.add_theme_constant_override("separation", 8)
+		var module_number := Label.new()
+		module_number.text = "%02d" % int(module_data.get("number", 0))
+		module_number.theme_type_variation = "AmberLabel"
+		module_header.add_child(module_number)
+		var module_title := Label.new()
+		module_title.text = module_data.get("title", "")
+		module_title.theme_type_variation = "SectionHeading"
+		module_header.add_child(module_title)
+		nav_list.add_child(_margin_wrap(module_header, 6, 9, 6, 5))
+
+		for exercise_data in module_data.get("exercises", []):
+			var exercise_id: String = exercise_data.get("id", "")
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 8)
+			var dot := PanelContainer.new()
+			dot.custom_minimum_size = Vector2(6.0, 6.0)
+			dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			var dot_style := _dot_style(AtlasThemeScript.HAIRLINE, 6.0)
+			dot.add_theme_stylebox_override("panel", dot_style)
+			row.add_child(dot)
+
+			var button := _new_button("%02d  %s" % [int(exercise_data.get("number", 0)), exercise_data.get("title", "")], "NavButton")
+			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			button.toggle_mode = true
+			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			button.tooltip_text = exercise_data.get("summary", "")
+			button.pressed.connect(_select_exercise.bind(exercise_id))
+			row.add_child(button)
+			nav_list.add_child(row)
+			nav_rows[exercise_id] = {"button": button, "dot_style": dot_style}
+
+
+func _on_exercise_changed(entry: Dictionary, lesson: Dictionary, shader: Shader) -> void:
+	var exercise_id: String = entry.get("id", "")
+	var number: int = entry.get("number", 0)
+	var module_data: Dictionary = session.repository.get_module_for(exercise_id)
+	breadcrumb_label.text = "M%02d / %02d" % [int(module_data.get("number", 0)), number]
+	source_path_label.text = "exercises/%s/exercise.gdshader" % exercise_id
+	source_path_label.tooltip_text = session.workspace.absolute_source_path()
+	exercise_meta_label.text = "MODULE %02d · EXERCISE %02d / 32" % [int(module_data.get("number", 0)), number]
+	exercise_title_label.text = entry.get("title", "")
+	lesson_lead.text = markdown.body(lesson.get("lead", ""))
+	preview_kind_label.text = "%s · 512²" % entry.get("preview", "canvas").to_upper()
+	calibrated_preview.configure(entry.get("preview", "canvas"), shader, exercise_id)
+
+	var solution_shader: Shader = session.workspace.solution_shader()
+	reference_fixture.configure(entry.get("preview", "canvas"), solution_shader, exercise_id)
+	reference_fixture.render_target_update_mode = SubViewport.UPDATE_DISABLED
+
+	reset_armed = false
+	reset_panel.visible = false
+	_render_lesson_sections()
+	_build_manual_checklist()
+	_refresh_navigation_state()
+	_refresh_exercise_actions()
+	_set_status("已载入当前 Shader，保存文件后会自动刷新", "neutral")
+
+
+func _on_source_external_changed(shader: Shader) -> void:
+	calibrated_preview.replace_shader(shader)
+	_set_status("检测到文件保存，实时画面已重新载入", "pending")
+
+
+func _on_progress_changed(_progress: Dictionary) -> void:
+	_refresh_progress()
+	_refresh_navigation_state()
+	_refresh_exercise_actions()
+
+
+func _on_session_ready() -> void:
+	var asset_status: Dictionary = session.private_assets.status()
+	if asset_status.get("available", false):
+		asset_status_label.text = "PRIVATE ASSETS · DETECTED"
+		asset_status_label.theme_type_variation = "SuccessLabel"
+	else:
+		asset_status_label.text = "SELF-CONTAINED FIXTURES"
+		asset_status_label.theme_type_variation = "MutedLabel"
+	if session.progress.recovered_corrupt_save:
+		_set_status("进度存档已恢复，损坏副本保留在 user://shader_atlas", "pending")
+
+
+func _on_session_error(message: String) -> void:
+	exercise_title_label.text = "课程无法载入"
+	_set_status(message, "error")
+
+
+func _render_lesson_sections() -> void:
+	_clear_children(lesson_sections)
+	for section in session.visible_lesson_sections():
+		var is_hint: bool = section.get("kind", "body") == "hint"
+		var section_column := VBoxContainer.new()
+		section_column.add_theme_constant_override("separation", 8)
+		var heading := Label.new()
+		heading.text = section.get("heading", "")
+		heading.theme_type_variation = "AmberLabel" if is_hint else "SectionHeading"
+		section_column.add_child(heading)
+
+		var body := RichTextLabel.new()
+		body.bbcode_enabled = true
+		body.fit_content = true
+		body.scroll_active = false
+		body.selection_enabled = true
+		body.context_menu_enabled = true
+		body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		body.text = markdown.body(section.get("body", ""))
+		section_column.add_child(body)
+
+		if is_hint:
+			var hint_surface := PanelContainer.new()
+			hint_surface.theme_type_variation = "RaisedPanel"
+			hint_surface.add_child(_margin_wrap(section_column, 12, 10, 12, 11))
+			lesson_sections.add_child(hint_surface)
+		else:
+			lesson_sections.add_child(section_column)
+			lesson_sections.add_child(_make_divider())
+
+
+func _build_manual_checklist() -> void:
+	_clear_children(manual_list)
+	manual_checks.clear()
+	var checklist: Array = session.current_rule().get("manual_checklist", [])
+	manual_panel.visible = not checklist.is_empty()
+	if checklist.is_empty():
+		return
+	var heading := Label.new()
+	heading.text = "观察清单"
+	heading.theme_type_variation = "SectionHeading"
+	manual_list.add_child(heading)
+	for item in checklist:
+		var check := CheckBox.new()
+		check.text = str(item)
+		check.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		check.focus_mode = Control.FOCUS_ALL
+		manual_list.add_child(check)
+		manual_checks.append(check)
+
+
+func _refresh_progress() -> void:
+	if session == null or session.progress.data.is_empty():
+		return
+	var count: int = session.progress.completion_count()
+	progress_bar.value = count
+	progress_count.text = "%02d / 32" % count
+
+
+func _refresh_navigation_state() -> void:
+	if session == null or session.current_entry.is_empty():
+		return
+	var current_id: String = session.current_entry.get("id", "")
+	for exercise_id in nav_rows:
+		var row: Dictionary = nav_rows[exercise_id]
+		var button: Button = row.button
+		var dot_style: StyleBoxFlat = row.dot_style
+		var is_current: bool = exercise_id == current_id
+		var is_complete: bool = session.progress.is_complete(exercise_id)
+		var is_locked: bool = session.is_locked(exercise_id)
+		button.set_pressed_no_signal(is_current)
+		button.disabled = is_locked and not is_current
+		if is_current:
+			dot_style.bg_color = AtlasThemeScript.SIGNAL_AMBER
+		elif is_complete:
+			dot_style.bg_color = AtlasThemeScript.PASS_GREEN
+		elif is_locked:
+			dot_style.bg_color = Color(AtlasThemeScript.HAIRLINE, 0.45)
+		else:
+			dot_style.bg_color = AtlasThemeScript.HAIRLINE
+
+
+func _refresh_exercise_actions() -> void:
+	if session == null or session.current_entry.is_empty():
+		return
+	var exercise_id: String = session.current_entry.get("id", "")
+	var is_complete: bool = session.progress.is_complete(exercise_id)
+	exercise_state_label.text = "已通过" if is_complete else "进行中"
+	exercise_state_label.theme_type_variation = "SuccessLabel" if is_complete else "AmberLabel"
+
+	var revealed: int = session.progress.get_revealed_hint_count(exercise_id)
+	var total: int = session.current_lesson.get("hints", []).size()
+	hint_button.text = "提示 %d/%d" % [revealed, total]
+	hint_button.disabled = revealed >= total
+
+	var previous: Dictionary = session.previous_exercise()
+	var next: Dictionary = session.next_exercise()
+	previous_button.disabled = previous.is_empty()
+	next_button.disabled = next.is_empty() or session.is_locked(next.get("id", ""))
+
+
+func _select_exercise(exercise_id: String) -> void:
+	if validation_busy:
+		return
+	session.select_exercise(exercise_id)
+
+
+func _go_previous() -> void:
+	var entry: Dictionary = session.previous_exercise()
+	if not entry.is_empty():
+		session.select_exercise(entry.get("id", ""), false)
+
+
+func _go_next() -> void:
+	var entry: Dictionary = session.next_exercise()
+	if not entry.is_empty() and not session.is_locked(entry.get("id", "")):
+		session.select_exercise(entry.get("id", ""))
+
+
+func _reveal_hint() -> void:
+	if session == null or session.current_entry.is_empty():
+		return
+	var result: Dictionary = session.reveal_hint()
+	_render_lesson_sections()
+	_refresh_exercise_actions()
+	_set_status("已揭示提示 %d / %d" % [result.get("revealed", 0), result.get("total", 0)], "pending")
+	await get_tree().process_frame
+	lesson_scroll.scroll_vertical = int(lesson_sections.size.y)
+
+
+func _arm_reset() -> void:
+	if reset_armed:
+		return
+	reset_armed = true
+	reset_panel.visible = true
+	reset_copy.text = "将恢复本题 starter，当前代码会先备份到 user://shader_atlas/backups。"
+	_set_status("重置尚未执行，请在讲义下方确认", "error")
+
+
+func _cancel_reset() -> void:
+	reset_armed = false
+	reset_panel.visible = false
+	_set_status("已取消重置，当前代码未改变", "neutral")
+
+
+func _confirm_reset() -> void:
+	var result: Dictionary = session.reset_current()
+	reset_armed = false
+	reset_panel.visible = false
+	if result.get("ok", false):
+		_set_status("已恢复 starter，旧代码保存在本机备份目录", "pending")
+	else:
+		_set_status(result.get("error", "无法重置当前练习"), "error")
+
+
+func _reload_source() -> void:
+	if session == null or session.current_entry.is_empty():
+		return
+	var shader: Shader = session.workspace.reload_current()
+	calibrated_preview.replace_shader(shader)
+	_set_status("已从磁盘重新载入当前 Shader", "pending")
+
+
+func _run_validation() -> void:
+	if validation_busy or session == null or session.current_entry.is_empty():
+		return
+	validation_busy = true
+	validate_button.disabled = true
+	calibrated_preview.play_scan()
+	_set_status("正在渲染学习版本与参考版本", "pending")
+
+	var rule: Dictionary = session.current_rule()
+	var mode: String = rule.get("mode", "visual")
+	var visual_result: Dictionary = {"passed": true}
+	if mode.contains("visual"):
+		reference_fixture.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+		var settle_frames: int = rule.get("visual", {}).get("settle_frames", 4)
+		for _frame in range(settle_frames):
+			await get_tree().process_frame
+		await RenderingServer.frame_post_draw
+		visual_result = session.validation.compare_images(
+			session.current_entry.get("id", ""),
+			calibrated_preview.snapshot(),
+			reference_fixture.snapshot()
+		)
+		reference_fixture.render_target_update_mode = SubViewport.UPDATE_DISABLED
+
+	var combined: Dictionary = session.complete_validation(visual_result, _manual_is_confirmed())
+	if combined.get("passed", false):
+		_set_status("验证通过，下一题已解锁", "success")
+		_fade_in_status()
+	else:
+		var failures: Array = combined.get("failures", [])
+		var message: String = failures[0] if not failures.is_empty() else "验证尚未通过。"
+		if mode.contains("visual") and not visual_result.get("passed", false) and visual_result.has("mean_error"):
+			message = "%s 平均画面差异 %.1f%%。" % [message.trim_suffix("。"), float(visual_result.mean_error) * 100.0]
+		_set_status(message, "error")
+
+	validation_busy = false
+	validate_button.disabled = false
+	_refresh_progress()
+	_refresh_navigation_state()
+	_refresh_exercise_actions()
+
+
+func _manual_is_confirmed() -> bool:
+	for check in manual_checks:
+		if not check.button_pressed:
+			return false
+	return true
+
+
+func _copy_source_path() -> void:
+	if session == null or session.current_entry.is_empty():
+		return
+	DisplayServer.clipboard_set(session.workspace.absolute_source_path())
+	_set_status("当前 Shader 路径已复制", "neutral")
+
+
+func _open_source() -> void:
+	if session == null or session.current_entry.is_empty():
+		return
+	OS.shell_open(session.workspace.absolute_source_path())
+
+
+func _open_solution() -> void:
+	if session == null or session.current_entry.is_empty():
+		return
+	var path: String = session.current_entry.get("solution_path", "")
+	OS.shell_open(ProjectSettings.globalize_path(path))
+
+
+func _set_status(message: String, state: String) -> void:
+	if status_label == null:
+		return
+	status_label.text = message
+	match state:
+		"success":
+			status_dot_style.bg_color = AtlasThemeScript.PASS_GREEN
+			status_label.theme_type_variation = "SuccessLabel"
+		"error":
+			status_dot_style.bg_color = AtlasThemeScript.FAULT_CORAL
+			status_label.theme_type_variation = "FaultLabel"
+		"pending":
+			status_dot_style.bg_color = AtlasThemeScript.SIGNAL_AMBER
+			status_label.theme_type_variation = "AmberLabel"
+		_:
+			status_dot_style.bg_color = AtlasThemeScript.TEXT_MUTED
+			status_label.theme_type_variation = "SecondaryLabel"
+
+
+func _fade_in_status() -> void:
+	status_panel.modulate.a = 0.0
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_QUART)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(status_panel, "modulate:a", 1.0, 0.18)
+
+
+func _apply_responsive_layout() -> void:
+	if nav_panel == null or lesson_panel == null:
+		return
+	if size.x < 1400.0:
+		nav_panel.custom_minimum_size.x = 224.0
+		lesson_panel.custom_minimum_size.x = 400.0
+	else:
+		nav_panel.custom_minimum_size.x = 252.0
+		lesson_panel.custom_minimum_size.x = 456.0
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not event is InputEventKey or not event.pressed or event.echo:
+		return
+	if event.ctrl_pressed and event.keycode in [KEY_ENTER, KEY_KP_ENTER]:
+		_run_validation()
+		get_viewport().set_input_as_handled()
+	elif event.ctrl_pressed and event.keycode == KEY_R:
+		_arm_reset()
+		get_viewport().set_input_as_handled()
+	elif event.keycode == KEY_ESCAPE and reset_armed:
+		_cancel_reset()
+		get_viewport().set_input_as_handled()
+	elif event.alt_pressed and event.keycode == KEY_LEFT:
+		_go_previous()
+		get_viewport().set_input_as_handled()
+	elif event.alt_pressed and event.keycode == KEY_RIGHT:
+		_go_next()
+		get_viewport().set_input_as_handled()
+	elif not event.ctrl_pressed and not event.alt_pressed and event.keycode == KEY_H:
+		_reveal_hint()
+		get_viewport().set_input_as_handled()
+
+
+func _new_button(label: String, variation: StringName) -> Button:
+	var button := AtlasButtonScript.new()
+	button.text = label
+	button.theme_type_variation = variation
+	button.custom_minimum_size = Vector2(0.0, 40.0)
+	return button
+
+
+func _margin_wrap(child: Control, left: int, top: int, right: int, bottom: int) -> MarginContainer:
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", left)
+	margin.add_theme_constant_override("margin_top", top)
+	margin.add_theme_constant_override("margin_right", right)
+	margin.add_theme_constant_override("margin_bottom", bottom)
+	margin.add_child(child)
+	return margin
+
+
+func _make_divider() -> ColorRect:
+	var divider := ColorRect.new()
+	divider.color = AtlasThemeScript.HAIRLINE
+	divider.custom_minimum_size = Vector2(0.0, 1.0)
+	divider.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return divider
+
+
+func _make_dot(color: Color, diameter: float) -> PanelContainer:
+	var dot := PanelContainer.new()
+	dot.custom_minimum_size = Vector2(diameter, diameter)
+	dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	dot.add_theme_stylebox_override("panel", _dot_style(color, diameter))
+	return dot
+
+
+func _dot_style(color: Color, diameter: float) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	var radius := int(ceilf(diameter * 0.5))
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_left = radius
+	style.corner_radius_bottom_right = radius
+	return style
+
+
+func _clear_children(node: Node) -> void:
+	for child in node.get_children():
+		node.remove_child(child)
+		child.queue_free()
