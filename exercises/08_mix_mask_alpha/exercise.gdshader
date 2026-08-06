@@ -8,7 +8,8 @@ uniform float feather : hint_range(0.001, 0.15) = 0.035;
 void fragment() {
 	float distance_to_center = length(UV - vec2(0.5));
 	// TODO: step 形成硬边，而且 Alpha 没有使用遮罩。
-	float mask = 1.0 - smoothstep(radius - feather, radius + feather, distance_to_center);
+	float mask = 1.0 - step(radius, distance_to_center);
 	vec3 color = mix(outside_color.rgb, inside_color.rgb, mask);
-	COLOR = vec4(color, mask);
+	COLOR = vec4(color, 1.0);
 }
+

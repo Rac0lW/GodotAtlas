@@ -10,10 +10,11 @@ varying float height_value;
 
 void vertex() {
 	// TODO: 当前渐变仍然粘在对象上。
-	height_value = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y;
+	height_value = VERTEX.y;
 }
 
 void fragment() {
 	float blend = smoothstep(gradient_low, gradient_high, height_value);
 	ALBEDO = mix(cold_color.rgb, warm_color.rgb, blend);
 }
+

@@ -13,10 +13,10 @@
 
 - `CourseRepository` 读取并索引课程内容。
 - `LessonParser` 把 Markdown 分成导语、正文和渐进提示，不负责界面样式。
-- `ProgressStore` 在 `user://shader_atlas/progress.json` 保存当前题、完成题和提示揭示数量。损坏的存档会先复制到带时间戳的备份，再建立新存档。
-- `ShaderWorkspace` 监听外部文件修改、生成运行时 Shader，并在重置前保存学习者代码。
+- `ProgressStore` 在 `user://shader_atlas/progress.json` 保存当前题、完成题和提示揭示数量，并提供可回滚的全量进度重置。损坏的存档会先复制到带时间戳的备份，再建立新存档。
+- `ShaderWorkspace` 监听外部文件修改、生成运行时 Shader，并在全局重置前完整备份 32 题源码；任一写入失败时会自动恢复原始内容。
 - `ValidationRegistry` 执行源码契约、图像差异计算和混合验收逻辑。
-- `CourseSession` 把上述组件组织成界面可消费的状态与信号。
+- `CourseSession` 协调全局重置事务，并用临时开发者模式绕过前置关卡限制。
 - `PrivateAssetResolver` 隔离私有配套资源，保证核心课程可独立运行。
 
 ## 交互流程
@@ -31,6 +31,8 @@
 ## 恢复策略
 
 - 重置不会直接丢弃代码，旧内容先写入 `user://shader_atlas/backups`。
+- 全局重置先在同一个时间戳目录保存进度和全部练习源码，再恢复 starter；源码或进度写入失败时会回滚，备份继续保留。
+- 开发者模式只影响本次运行的关卡锁定判断，不改变完成记录。
 - starter 使用 `.txt` 后缀，避免 Godot 把它当成运行资源导入。
 - 参考解答与学习者文件物理分离，验证过程不会覆写学习者代码。
 - 核心课程不依赖 `assets_v17`，移动或删除私人素材不会破坏索引。

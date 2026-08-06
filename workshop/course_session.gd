@@ -6,6 +6,7 @@ signal exercise_changed(entry: Dictionary, lesson: Dictionary, shader: Shader)
 signal source_external_changed(shader: Shader)
 signal progress_changed(progress: Dictionary)
 signal session_error(message: String)
+signal developer_mode_changed(enabled: bool)
 
 var repository := CourseRepository.new()
 var progress := ProgressStore.new()
@@ -16,6 +17,7 @@ var private_assets := PrivateAssetResolver.new()
 
 var current_entry: Dictionary = {}
 var current_lesson: Dictionary = {}
+var developer_mode := false
 
 
 func _ready() -> void:
@@ -55,7 +57,7 @@ func select_exercise(exercise_id: String, enforce_prerequisite: bool = true) -> 
 	if entry.is_empty():
 		session_error.emit("未知练习：%s" % exercise_id)
 		return false
-	if enforce_prerequisite and not repository.prerequisite_is_met(exercise_id, progress.data.get("completed", [])):
+	if enforce_prerequisite and not developer_mode and not repository.prerequisite_is_met(exercise_id, progress.data.get("completed", [])):
 		session_error.emit("请先完成前置练习。")
 		return false
 	if not workspace.open_exercise(entry):
@@ -99,6 +101,33 @@ func reset_current() -> Dictionary:
 		exercise_changed.emit(current_entry, current_lesson, shader)
 	return result
 
+func reset_all() -> Dictionary:
+	var first_id: String = repository.get_exercise_at(0).get("id", "")
+	if first_id.is_empty():
+		return {"ok": false, "error": "课程目录中没有可重置的练习。"}
+
+	var backup_result := workspace.create_backup_directory()
+	if not backup_result.get("ok", false):
+		return backup_result
+	var backup_directory: String = backup_result.get("backup_directory", "")
+	if not progress.backup_to(backup_directory):
+		return {"ok": false, "error": "无法备份课程进度：%s" % backup_directory}
+
+	var source_result := workspace.reset_all_to_starters(repository.exercises, backup_directory)
+	if not source_result.get("ok", false):
+		return source_result
+
+	if not progress.reset_all(first_id):
+		var restore_result := workspace.restore_all_from_backup(repository.exercises, backup_directory)
+		var suffix := "" if restore_result.get("ok", false) else "，练习源码回滚也失败，请从备份目录恢复"
+		return {"ok": false, "error": "无法清空课程进度%s" % suffix}
+
+	set_developer_mode(false)
+	if not select_exercise(first_id, false):
+		return {"ok": false, "error": "全局重置完成，但无法载入第一题。"}
+	progress_changed.emit(progress.data)
+	return {"ok": true, "backup_directory": backup_directory}
+
 
 func contract_result() -> Dictionary:
 	return validation.check_contracts(current_entry.get("id", ""), workspace.current_source())
@@ -112,12 +141,20 @@ func complete_validation(visual_result: Dictionary, manual_confirmed: bool) -> D
 		progress_changed.emit(progress.data)
 	return combined
 
+func set_developer_mode(enabled: bool) -> void:
+	if developer_mode == enabled:
+		return
+	developer_mode = enabled
+	developer_mode_changed.emit(developer_mode)
+
 
 func current_rule() -> Dictionary:
 	return validation.get_rule(current_entry.get("id", ""))
 
 
 func is_locked(exercise_id: String) -> bool:
+	if developer_mode:
+		return false
 	return not repository.prerequisite_is_met(exercise_id, progress.data.get("completed", []))
 
 

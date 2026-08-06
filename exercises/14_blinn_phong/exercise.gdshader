@@ -10,15 +10,6 @@ void fragment() {
 void light() {
 	float ndotl = max(dot(NORMAL, LIGHT), 0.0);
 	DIFFUSE_LIGHT += ALBEDO * LIGHT_COLOR * ndotl * ATTENUATION;
-	
-	vec3 half = normalize(LIGHT + VIEW);
-	
-	float f = dot(half, NORMAL);
-	
-	float p_f = max(f, 0.0);
-	
-	float high_light = pow(p_f, shininess);
-	
-	SPECULAR_LIGHT += high_light; 
 	// TODO: 添加 Blinn-Phong 高光。
 }
+

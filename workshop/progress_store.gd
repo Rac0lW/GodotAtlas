@@ -4,20 +4,25 @@ extends RefCounted
 const SCHEMA_VERSION := 1
 const COURSE_ID := "shader_atlas_zh"
 const SAVE_PATH := "user://shader_atlas/progress.json"
-const DATA_ROOT := "user://shader_atlas"
 
+var save_path := SAVE_PATH
 var data: Dictionary = {}
 var recovered_corrupt_save := false
 
 
+func _init(custom_save_path: String = "") -> void:
+	if not custom_save_path.is_empty():
+		save_path = custom_save_path
+
+
 func load_progress(default_exercise_id: String) -> Dictionary:
 	recovered_corrupt_save = false
-	if not FileAccess.file_exists(SAVE_PATH):
+	if not FileAccess.file_exists(save_path):
 		data = _new_data(default_exercise_id)
 		save()
 		return data
 
-	var raw := FileAccess.get_file_as_string(SAVE_PATH)
+	var raw := FileAccess.get_file_as_string(save_path)
 	var parsed: Variant = JSON.parse_string(raw)
 	if not (parsed is Dictionary) or parsed.get("schema_version", 0) != SCHEMA_VERSION:
 		_backup_corrupt(raw)
@@ -34,12 +39,30 @@ func load_progress(default_exercise_id: String) -> Dictionary:
 func save() -> bool:
 	_ensure_data_root()
 	data["updated_at"] = Time.get_datetime_string_from_system(true)
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	var file := FileAccess.open(save_path, FileAccess.WRITE)
 	if file == null:
 		push_error("无法保存课程进度：%s" % FileAccess.get_open_error())
 		return false
 	file.store_string(JSON.stringify(data, "\t", false))
 	return true
+
+func backup_to(directory: String) -> bool:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(directory))
+	var path := directory.path_join("progress.json")
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(JSON.stringify(data, "\t", false))
+	return true
+
+
+func reset_all(default_exercise_id: String) -> bool:
+	var previous_data := data
+	data = _new_data(default_exercise_id)
+	if save():
+		return true
+	data = previous_data
+	return false
 
 
 func set_current(exercise_id: String) -> void:
@@ -116,11 +139,11 @@ func _normalize(default_exercise_id: String) -> void:
 func _backup_corrupt(raw: String) -> void:
 	_ensure_data_root()
 	var stamp := Time.get_datetime_string_from_system().replace(":", "-")
-	var path := "%s/progress-corrupt-%s.json" % [DATA_ROOT, stamp]
+	var path := "%s/progress-corrupt-%s.json" % [save_path.get_base_dir(), stamp]
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file != null:
 		file.store_string(raw)
 
 
 func _ensure_data_root() -> void:
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DATA_ROOT))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(save_path.get_base_dir()))

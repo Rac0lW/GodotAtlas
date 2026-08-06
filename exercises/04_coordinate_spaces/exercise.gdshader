@@ -6,10 +6,6 @@ varying vec3 position_os;
 void vertex() {
 	// TODO: 这里仍然是对象空间。
 	position_os = VERTEX;
-	
-	vec3 world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	position_os = world_pos;
-	
 }
 
 void fragment() {

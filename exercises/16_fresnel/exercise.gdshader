@@ -7,10 +7,6 @@ uniform float rim_power : hint_range(0.5, 8.0) = 3.0;
 
 void fragment() {
 	// TODO: 让轮廓响应观察角度。
-	float f = dot(NORMAL, VIEW);
-	float ff = 1.0 - f;
-	
-	float fre = pow(ff, rim_power);
-	
-	ALBEDO = base_color.rgb + rim_color.rgb * fre;
+	ALBEDO = base_color.rgb;
 }
+

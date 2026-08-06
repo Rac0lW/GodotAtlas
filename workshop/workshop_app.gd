@@ -30,10 +30,14 @@ var lesson_scroll: ScrollContainer
 var lesson_sections: VBoxContainer
 var hint_button: Button
 var reset_button: Button
+var global_reset_button: Button
+var developer_mode_button: Button
 var previous_button: Button
 var next_button: Button
 var reset_panel: PanelContainer
 var reset_copy: Label
+var global_reset_panel: PanelContainer
+var global_reset_copy: Label
 
 var preview_kind_label: Label
 var calibrated_preview
@@ -47,7 +51,7 @@ var validate_button: Button
 var solution_button: Button
 
 var validation_busy := false
-var reset_armed := false
+var reset_scope := ""
 
 
 func _ready() -> void:
@@ -68,6 +72,7 @@ func _build_session() -> void:
 	session.progress_changed.connect(_on_progress_changed)
 	session.session_error.connect(_on_session_error)
 	session.session_ready.connect(_on_session_ready)
+	session.developer_mode_changed.connect(_on_developer_mode_changed)
 
 	reference_fixture = PreviewFixtureScript.new()
 	reference_fixture.render_target_update_mode = SubViewport.UPDATE_DISABLED
@@ -148,6 +153,44 @@ func _build_navigation_panel(parent: HBoxContainer) -> void:
 	progress_bar.custom_minimum_size = Vector2(0.0, 7.0)
 	progress_column.add_child(progress_bar)
 	column.add_child(_margin_wrap(progress_column, 16, 14, 16, 14))
+	column.add_child(_make_divider())
+	var utility_row := HBoxContainer.new()
+	utility_row.add_theme_constant_override("separation", 6)
+	developer_mode_button = _new_button("DEV · OFF", "QuietButton")
+	developer_mode_button.toggle_mode = true
+	developer_mode_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_mode_button.tooltip_text = "临时解除关卡前置限制，不修改完成记录"
+	developer_mode_button.toggled.connect(_toggle_developer_mode)
+	utility_row.add_child(developer_mode_button)
+	global_reset_button = _new_button("重置全部", "QuietButton")
+	global_reset_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	global_reset_button.tooltip_text = "备份全部练习代码，并从第 1 题重新开始"
+	global_reset_button.pressed.connect(_arm_global_reset)
+	utility_row.add_child(global_reset_button)
+	column.add_child(_margin_wrap(utility_row, 10, 8, 10, 8))
+	global_reset_panel = PanelContainer.new()
+	global_reset_panel.theme_type_variation = "RaisedPanel"
+	global_reset_panel.visible = false
+	var global_reset_column := VBoxContainer.new()
+	global_reset_column.add_theme_constant_override("separation", 8)
+	global_reset_copy = Label.new()
+	global_reset_copy.text = "备份 32 题代码，清空进度与提示，回到第 1 题。"
+	global_reset_copy.theme_type_variation = "SecondaryLabel"
+	global_reset_copy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	global_reset_column.add_child(global_reset_copy)
+	var global_reset_actions := HBoxContainer.new()
+	global_reset_actions.add_theme_constant_override("separation", 6)
+	var cancel_global_reset := _new_button("取消", "QuietButton")
+	cancel_global_reset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cancel_global_reset.pressed.connect(_cancel_reset)
+	global_reset_actions.add_child(cancel_global_reset)
+	var confirm_global_reset := _new_button("确认全部重置", "DangerButton")
+	confirm_global_reset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	confirm_global_reset.pressed.connect(_confirm_global_reset)
+	global_reset_actions.add_child(confirm_global_reset)
+	global_reset_column.add_child(global_reset_actions)
+	global_reset_panel.add_child(_margin_wrap(global_reset_column, 10, 9, 10, 9))
+	column.add_child(_margin_wrap(global_reset_panel, 10, 0, 10, 8))
 	column.add_child(_make_divider())
 
 	var nav_scroll := ScrollContainer.new()
@@ -443,8 +486,9 @@ func _on_exercise_changed(entry: Dictionary, lesson: Dictionary, shader: Shader)
 	reference_fixture.configure(entry.get("preview", "canvas"), solution_shader, exercise_id)
 	reference_fixture.render_target_update_mode = SubViewport.UPDATE_DISABLED
 
-	reset_armed = false
+	reset_scope = ""
 	reset_panel.visible = false
+	global_reset_panel.visible = false
 	_render_lesson_sections()
 	_build_manual_checklist()
 	_refresh_navigation_state()
@@ -459,6 +503,13 @@ func _on_source_external_changed(shader: Shader) -> void:
 
 func _on_progress_changed(_progress: Dictionary) -> void:
 	_refresh_progress()
+	_refresh_navigation_state()
+	_refresh_exercise_actions()
+
+func _on_developer_mode_changed(enabled: bool) -> void:
+	developer_mode_button.set_pressed_no_signal(enabled)
+	developer_mode_button.text = "DEV · ON" if enabled else "DEV · OFF"
+	developer_mode_button.theme_type_variation = "PrimaryButton" if enabled else "QuietButton"
 	_refresh_navigation_state()
 	_refresh_exercise_actions()
 
@@ -611,28 +662,58 @@ func _reveal_hint() -> void:
 
 
 func _arm_reset() -> void:
-	if reset_armed:
+	if reset_scope == "current":
 		return
-	reset_armed = true
+	reset_scope = "current"
 	reset_panel.visible = true
 	reset_copy.text = "将恢复本题 starter，当前代码会先备份到 user://shader_atlas/backups。"
-	_set_status("重置尚未执行，请在讲义下方确认", "error")
+	_set_status("本题重置尚未执行，请在讲义下方确认", "error")
+
+
+func _arm_global_reset() -> void:
+	if validation_busy or reset_scope == "all":
+		return
+	reset_scope = "all"
+	reset_panel.visible = false
+	global_reset_panel.visible = true
+	_set_status("全局重置尚未执行，请在左侧栏确认", "error")
 
 
 func _cancel_reset() -> void:
-	reset_armed = false
+	reset_scope = ""
 	reset_panel.visible = false
-	_set_status("已取消重置，当前代码未改变", "neutral")
+	global_reset_panel.visible = false
+	_set_status("已取消重置，课程代码与进度均未改变", "neutral")
 
 
 func _confirm_reset() -> void:
 	var result: Dictionary = session.reset_current()
-	reset_armed = false
+	reset_scope = ""
 	reset_panel.visible = false
 	if result.get("ok", false):
 		_set_status("已恢复 starter，旧代码保存在本机备份目录", "pending")
 	else:
 		_set_status(result.get("error", "无法重置当前练习"), "error")
+
+
+func _confirm_global_reset() -> void:
+	var result: Dictionary = session.reset_all()
+	reset_scope = ""
+	reset_panel.visible = false
+	global_reset_panel.visible = false
+	if result.get("ok", false):
+		_set_status("已备份全部练习并从第 1 题重新开始", "pending")
+	else:
+		_set_status(result.get("error", "无法重置课程"), "error")
+
+func _toggle_developer_mode(enabled: bool) -> void:
+	if session == null:
+		return
+	session.set_developer_mode(enabled)
+	if enabled:
+		_set_status("开发者模式已开启，可跳转全部关卡，完成记录保持不变", "pending")
+	else:
+		_set_status("开发者模式已关闭，关卡前置限制已恢复", "neutral")
 
 
 func _reload_source() -> void:
@@ -759,7 +840,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	elif event.ctrl_pressed and event.keycode == KEY_R:
 		_arm_reset()
 		get_viewport().set_input_as_handled()
-	elif event.keycode == KEY_ESCAPE and reset_armed:
+	elif event.keycode == KEY_ESCAPE and not reset_scope.is_empty():
 		_cancel_reset()
 		get_viewport().set_input_as_handled()
 	elif event.alt_pressed and event.keycode == KEY_LEFT:

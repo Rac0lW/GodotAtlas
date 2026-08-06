@@ -1,6 +1,6 @@
 # Shader Atlas
 
-Shader Atlas 是一套 Godot 4.7.1 原生交互式 Shader 课程。它把《Godot 着色器圣经》的知识主线重组为 6 个模块、32 个连续练习，并借鉴 `100-exercises-to-learn-rust` 的短练习、独立解答和自动反馈结构。
+Shader Atlas 是一套 Godot 4.7.1 原生交互式 Shader 课程。课程目录的早期骨架参考了《Godot 着色器圣经》从网格、光照到程序化效果和后处理的主题顺序；32 个练习的讲义、代码、预览和验证均由本项目重新设计。练习系统还借鉴了 `100-exercises-to-learn-rust` 的短练习、独立解答和自动反馈结构。
 
 ![Shader Atlas 1440×900 界面](docs/screenshots/shader-atlas-1440.png)
 
@@ -17,16 +17,18 @@ Shader Atlas 是一套 Godot 4.7.1 原生交互式 Shader 课程。它把《Godo
 
 ## 交互
 
-| 操作 | 快捷键 |
+| 操作 | 入口 |
 |---|---|
 | 运行验证 | `Ctrl+Enter` |
-| 进入重置确认 | `Ctrl+R` |
+| 重置当前练习 | `Ctrl+R` |
+| 重置全部课程 | 左侧栏“重置全部” |
+| 切换开发者模式 | 左侧栏“DEV · OFF” |
 | 揭示下一条提示 | `H` |
 | 上一题 | `Alt+Left` |
 | 下一题 | `Alt+Right` |
 | 取消重置确认 | `Esc` |
 
-每题提供三级提示。重置是两步操作，执行前会把当前代码保存到 `user://shader_atlas/backups`。参考解答位于 `solutions/`，不会覆盖学习者文件。
+每题提供三级提示。当前练习与全局重置都需要二次确认；全局重置会先备份全部 32 题代码和进度，再恢复 starter、清空完成记录与提示并回到第 1 题。备份位于 `user://shader_atlas/backups`。参考解答位于 `solutions/`，不会覆盖学习者文件。
 
 ## 课程结构
 
@@ -48,6 +50,8 @@ Shader Atlas 是一套 Godot 4.7.1 原生交互式 Shader 课程。它把《Godo
 ## 进度与私人素材
 
 进度保存在 `user://shader_atlas/progress.json`。若文件损坏，程序会保留带时间戳的原始副本，然后建立新存档。
+
+开发者模式只在当前运行期间解除关卡前置限制，允许直接跳转任意练习；它不会修改完成记录，也不会写入进度存档。
 
 检测到 `res://assets_v17/assets` 时，左下角会显示 `PRIVATE ASSETS · DETECTED`。核心练习始终使用自带几何体和程序化夹具，因此移走该目录也不会破坏课程。
 
