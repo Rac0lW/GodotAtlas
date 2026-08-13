@@ -3,6 +3,7 @@ extends SceneTree
 const CourseSessionScript = preload("res://workshop/course_session.gd")
 const ProgressStoreScript = preload("res://workshop/progress_store.gd")
 const ShaderWorkspaceScript = preload("res://workshop/shader_workspace.gd")
+const PreviewFixtureScript = preload("res://workshop/preview_fixture.gd")
 
 var failures: Array[String] = []
 var temp_root := ""
@@ -17,10 +18,11 @@ func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(temp_root))
 	_test_global_reset()
 	_test_developer_mode()
+	_test_camera_rotation()
 	_remove_tree(temp_root)
 
 	if failures.is_empty():
-		print("COURSE_CONTROLS_SMOKE_OK global_reset=pass developer_mode=pass")
+		print("COURSE_CONTROLS_SMOKE_OK global_reset=pass developer_mode=pass camera_rotation=pass")
 		quit(0)
 		return
 	for failure in failures:
@@ -92,6 +94,27 @@ func _test_developer_mode() -> void:
 	session.set_developer_mode(false)
 	_expect(session.is_locked(last_id), "disabling developer mode did not restore prerequisite locks")
 	session.free()
+
+
+func _test_camera_rotation() -> void:
+	var shader := Shader.new()
+	shader.code = "shader_type spatial;"
+	var fixture = PreviewFixtureScript.new()
+	get_root().add_child(fixture)
+	fixture.configure("spatial_cube", shader, "camera_rotation_fixture")
+	_expect(fixture.can_rotate_camera(), "spatial preview did not expose a rotatable camera")
+	var original_position: Vector3 = fixture.preview_camera.position
+	var original_distance := original_position.length()
+	fixture.rotate_camera(Vector2(48.0, -24.0))
+	var rotated_position: Vector3 = fixture.preview_camera.position
+	_expect(not rotated_position.is_equal_approx(original_position), "camera drag did not rotate the preview camera")
+	_expect(is_equal_approx(rotated_position.length(), original_distance), "camera rotation did not preserve orbit distance")
+
+	var canvas_shader := Shader.new()
+	canvas_shader.code = "shader_type canvas_item;"
+	fixture.configure("canvas", canvas_shader, "canvas_fixture")
+	_expect(not fixture.can_rotate_camera(), "canvas preview unexpectedly exposed camera rotation")
+	fixture.queue_free()
 
 
 func _expect(condition: bool, message: String) -> void:
