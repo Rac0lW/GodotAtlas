@@ -4,6 +4,7 @@ const CourseSessionScript = preload("res://workshop/course_session.gd")
 const ProgressStoreScript = preload("res://workshop/progress_store.gd")
 const ShaderWorkspaceScript = preload("res://workshop/shader_workspace.gd")
 const PreviewFixtureScript = preload("res://workshop/preview_fixture.gd")
+const WorkshopAppScript = preload("res://workshop/workshop_app.gd")
 
 var failures: Array[String] = []
 var temp_root := ""
@@ -19,10 +20,11 @@ func _run() -> void:
 	_test_global_reset()
 	_test_developer_mode()
 	_test_camera_rotation()
+	_test_validation_camera_isolation()
 	_remove_tree(temp_root)
 
 	if failures.is_empty():
-		print("COURSE_CONTROLS_SMOKE_OK global_reset=pass developer_mode=pass camera_rotation=pass")
+		print("COURSE_CONTROLS_SMOKE_OK global_reset=pass developer_mode=pass camera_rotation=pass validation_camera=pass")
 		quit(0)
 		return
 	for failure in failures:
@@ -115,6 +117,39 @@ func _test_camera_rotation() -> void:
 	fixture.configure("canvas", canvas_shader, "canvas_fixture")
 	_expect(not fixture.can_rotate_camera(), "canvas preview unexpectedly exposed camera rotation")
 	fixture.queue_free()
+
+
+func _test_validation_camera_isolation() -> void:
+	var app = WorkshopAppScript.new()
+	app._build_session()
+	var validation_fixture = app.get("learner_validation_fixture")
+	_expect(validation_fixture != null, "workshop did not create an isolated learner validation fixture")
+	if validation_fixture == null:
+		app.free()
+		return
+	app.remove_child(validation_fixture)
+	get_root().add_child(validation_fixture)
+
+	var shader := Shader.new()
+	shader.code = "shader_type spatial;"
+	validation_fixture.configure("spatial_cube", shader, "validation_camera_fixture")
+	var expected_position: Vector3 = validation_fixture.preview_camera.position
+
+	var interactive_fixture = PreviewFixtureScript.new()
+	get_root().add_child(interactive_fixture)
+	interactive_fixture.configure("spatial_cube", shader, "validation_camera_fixture")
+	interactive_fixture.rotate_camera(Vector2(72.0, -36.0))
+	_expect(
+		validation_fixture.preview_camera.position.is_equal_approx(expected_position),
+		"interactive camera rotation leaked into the validation camera"
+	)
+	_expect(
+		app._actual_validation_fixture() == validation_fixture,
+		"visual validation did not read from the isolated learner fixture"
+	)
+	interactive_fixture.queue_free()
+	validation_fixture.queue_free()
+	app.free()
 
 
 func _expect(condition: bool, message: String) -> void:
