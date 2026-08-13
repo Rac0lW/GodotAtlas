@@ -11,6 +11,7 @@ const PreviewFixtureScript = preload("res://workshop/preview_fixture.gd")
 var session
 var markdown
 var reference_fixture
+var learner_validation_fixture
 
 var nav_panel: PanelContainer
 var lesson_panel: PanelContainer
@@ -77,6 +78,9 @@ func _build_session() -> void:
 	reference_fixture = PreviewFixtureScript.new()
 	reference_fixture.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	add_child(reference_fixture)
+	learner_validation_fixture = PreviewFixtureScript.new()
+	learner_validation_fixture.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	add_child(learner_validation_fixture)
 
 
 func _initialize_session() -> void:
@@ -481,6 +485,8 @@ func _on_exercise_changed(entry: Dictionary, lesson: Dictionary, shader: Shader)
 	lesson_lead.text = markdown.body(lesson.get("lead", ""))
 	preview_kind_label.text = "%s · 512²" % entry.get("preview", "canvas").to_upper()
 	calibrated_preview.configure(entry.get("preview", "canvas"), shader, exercise_id)
+	learner_validation_fixture.configure(entry.get("preview", "canvas"), shader, exercise_id)
+	learner_validation_fixture.render_target_update_mode = SubViewport.UPDATE_DISABLED
 
 	var solution_shader: Shader = session.workspace.solution_shader()
 	reference_fixture.configure(entry.get("preview", "canvas"), solution_shader, exercise_id)
@@ -498,6 +504,7 @@ func _on_exercise_changed(entry: Dictionary, lesson: Dictionary, shader: Shader)
 
 func _on_source_external_changed(shader: Shader) -> void:
 	calibrated_preview.replace_shader(shader)
+	learner_validation_fixture.replace_shader(shader)
 	_set_status("检测到文件保存，实时画面已重新载入", "pending")
 
 
@@ -721,6 +728,7 @@ func _reload_source() -> void:
 		return
 	var shader: Shader = session.workspace.reload_current()
 	calibrated_preview.replace_shader(shader)
+	learner_validation_fixture.replace_shader(shader)
 	_set_status("已从磁盘重新载入当前 Shader", "pending")
 
 
@@ -736,6 +744,7 @@ func _run_validation() -> void:
 	var mode: String = rule.get("mode", "visual")
 	var visual_result: Dictionary = {"passed": true}
 	if mode.contains("visual"):
+		learner_validation_fixture.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 		reference_fixture.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 		var settle_frames: int = rule.get("visual", {}).get("settle_frames", 4)
 		for _frame in range(settle_frames):
@@ -743,9 +752,10 @@ func _run_validation() -> void:
 		await RenderingServer.frame_post_draw
 		visual_result = session.validation.compare_images(
 			session.current_entry.get("id", ""),
-			calibrated_preview.snapshot(),
+			_actual_validation_snapshot(),
 			reference_fixture.snapshot()
 		)
+		learner_validation_fixture.render_target_update_mode = SubViewport.UPDATE_DISABLED
 		reference_fixture.render_target_update_mode = SubViewport.UPDATE_DISABLED
 
 	var combined: Dictionary = session.complete_validation(visual_result, _manual_is_confirmed())
@@ -764,6 +774,14 @@ func _run_validation() -> void:
 	_refresh_progress()
 	_refresh_navigation_state()
 	_refresh_exercise_actions()
+
+
+func _actual_validation_snapshot() -> Image:
+	return learner_validation_fixture.snapshot()
+
+
+func _actual_validation_fixture():
+	return learner_validation_fixture
 
 
 func _manual_is_confirmed() -> bool:
