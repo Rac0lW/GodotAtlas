@@ -8,6 +8,7 @@ var texture_rect: TextureRect
 var overlay: CalibrationOverlay
 var scan_line: ColorRect
 var _scan_tween: Tween
+var _camera_dragging := false
 
 
 class CalibrationOverlay:
@@ -73,7 +74,8 @@ func _ready() -> void:
 	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_STOP
+	texture_rect.gui_input.connect(_on_preview_gui_input)
 	stage.add_child(texture_rect)
 	texture_rect.texture = fixture.get_texture()
 
@@ -92,8 +94,13 @@ func _ready() -> void:
 
 
 func configure(kind: String, shader: Shader, exercise_id: String) -> void:
+	_camera_dragging = false
 	fixture.configure(kind, shader, exercise_id)
 	texture_rect.texture = fixture.get_texture()
+	tooltip_text = "按住左键拖动以旋转摄像机" if fixture.can_rotate_camera() else ""
+	texture_rect.mouse_default_cursor_shape = (
+		Control.CURSOR_DRAG if fixture.can_rotate_camera() else Control.CURSOR_ARROW
+	)
 
 
 func replace_shader(shader: Shader) -> void:
@@ -119,6 +126,17 @@ func play_scan() -> void:
 	_scan_tween.tween_property(scan_line, "position:y", maxf(FRAME_MARGIN, size.y - FRAME_MARGIN - 2.0), 0.52)
 	_scan_tween.tween_property(scan_line, "modulate:a", 0.0, 0.14)
 	_scan_tween.finished.connect(func() -> void: scan_line.visible = false)
+
+
+func _on_preview_gui_input(event: InputEvent) -> void:
+	if not fixture.can_rotate_camera():
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		_camera_dragging = event.pressed
+		accept_event()
+	elif event is InputEventMouseMotion and _camera_dragging:
+		fixture.rotate_camera(event.relative)
+		accept_event()
 
 
 func _layout_scan_line() -> void:

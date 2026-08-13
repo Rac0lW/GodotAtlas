@@ -3,10 +3,18 @@ extends SubViewport
 
 const RENDER_SIZE := Vector2i(512, 512)
 const BACKGROUND := Color("080b0e")
+const CAMERA_ROTATION_SENSITIVITY := 0.008
+const CAMERA_MIN_PITCH := deg_to_rad(-80.0)
+const CAMERA_MAX_PITCH := deg_to_rad(80.0)
 
 var fixture_kind := "canvas"
 var exercise_id := ""
 var shader_material: ShaderMaterial
+var preview_camera: Camera3D
+var _camera_target := Vector3.ZERO
+var _camera_distance := 0.0
+var _camera_yaw := 0.0
+var _camera_pitch := 0.0
 
 
 class PostSource:
@@ -77,7 +85,24 @@ func snapshot() -> Image:
 	return get_texture().get_image()
 
 
+func can_rotate_camera() -> bool:
+	return is_instance_valid(preview_camera)
+
+
+func rotate_camera(relative_motion: Vector2) -> void:
+	if not can_rotate_camera():
+		return
+	_camera_yaw -= relative_motion.x * CAMERA_ROTATION_SENSITIVITY
+	_camera_pitch = clampf(
+		_camera_pitch - relative_motion.y * CAMERA_ROTATION_SENSITIVITY,
+		CAMERA_MIN_PITCH,
+		CAMERA_MAX_PITCH
+	)
+	_update_camera_transform()
+
+
 func _clear_fixture() -> void:
+	preview_camera = null
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -204,12 +229,30 @@ func _add_environment() -> void:
 
 
 func _add_camera(camera_position: Vector3) -> void:
-	var camera := Camera3D.new()
-	camera.position = camera_position
-	camera.fov = 42.0
-	add_child(camera)
-	camera.look_at(Vector3.ZERO, Vector3.UP)
-	camera.current = true
+	preview_camera = Camera3D.new()
+	preview_camera.fov = 42.0
+	add_child(preview_camera)
+
+	_camera_target = Vector3.ZERO
+	_camera_distance = maxf(camera_position.distance_to(_camera_target), 0.01)
+	var offset := camera_position - _camera_target
+	_camera_yaw = atan2(offset.x, offset.z)
+	_camera_pitch = asin(clampf(offset.y / _camera_distance, -1.0, 1.0))
+	_update_camera_transform()
+	preview_camera.current = true
+
+
+func _update_camera_transform() -> void:
+	if not can_rotate_camera():
+		return
+	var horizontal_distance := cos(_camera_pitch) * _camera_distance
+	var offset := Vector3(
+		sin(_camera_yaw) * horizontal_distance,
+		sin(_camera_pitch) * _camera_distance,
+		cos(_camera_yaw) * horizontal_distance
+	)
+	preview_camera.position = _camera_target + offset
+	preview_camera.look_at(_camera_target, Vector3.UP)
 
 
 func _add_lights() -> void:
