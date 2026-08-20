@@ -12,7 +12,8 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var bounds := _requested_bounds()
+	var track := _requested_track()
+	var bounds := _requested_bounds(track)
 	var first_number: int = bounds.x
 	var last_number: int = bounds.y
 	var repository := CourseRepositoryScript.new()
@@ -25,6 +26,13 @@ func _run() -> void:
 		push_error(validation.last_error)
 		quit(1)
 		return
+	var active_validation = validation
+	if track == "prep":
+		active_validation = ValidationRegistryScript.new()
+		if not active_validation.load_checks("res://course/prep_checks.json"):
+			push_error(active_validation.last_error)
+			quit(1)
+			return
 
 	var fixture_root := Node.new()
 	fixture_root.name = "ShaderSmokeFixtures"
@@ -33,9 +41,10 @@ func _run() -> void:
 	var reference = PreviewFixtureScript.new()
 	fixture_root.add_child(learner)
 	fixture_root.add_child(reference)
+	var entries: Array = repository.prep_exercises if track == "prep" else repository.exercises
 
 	var rendered_count := 0
-	for entry in repository.exercises:
+	for entry in entries:
 		var exercise_number: int = entry.get("number", 0)
 		if exercise_number < first_number or exercise_number > last_number:
 			continue
@@ -57,13 +66,13 @@ func _run() -> void:
 			continue
 
 		if mode.contains("visual"):
-			var solution_result: Dictionary = validation.compare_images(exercise_id, solution_image, reference_image)
+			var solution_result: Dictionary = active_validation.compare_images(exercise_id, solution_image, reference_image)
 			if not solution_result.get("passed", false):
 				failures.append("%s solution did not match its mirror fixture" % exercise_id)
 
 			learner.configure(kind, starter_shader, exercise_id)
 			await _settle(4)
-			var starter_result: Dictionary = validation.compare_images(exercise_id, learner.snapshot(), reference.snapshot())
+			var starter_result: Dictionary = active_validation.compare_images(exercise_id, learner.snapshot(), reference.snapshot())
 			var mean_error: float = starter_result.get("mean_error", 0.0)
 			print("VISUAL %s solution=pass starter=%s mean=%.5f" % [exercise_id, "pass" if starter_result.get("passed", false) else "fail", mean_error])
 			if starter_result.get("passed", false):
@@ -76,7 +85,7 @@ func _run() -> void:
 		await process_frame
 	await RenderingServer.frame_post_draw
 	if failures.is_empty():
-		print("SHADER_SMOKE_OK %d exercises rendered range=%d..%d" % [rendered_count, first_number, last_number])
+		print("SHADER_SMOKE_OK %d exercises rendered track=%s range=%d..%d" % [rendered_count, track, first_number, last_number])
 		quit(0)
 		return
 	for failure in failures:
@@ -98,12 +107,19 @@ func _settle(frame_count: int) -> void:
 	await RenderingServer.frame_post_draw
 
 
-func _requested_bounds() -> Vector2i:
+func _requested_bounds(track: String) -> Vector2i:
 	var first := 1
-	var last := 32
+	var last := 5 if track == "prep" else 32
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--from="):
 			first = int(argument.trim_prefix("--from="))
 		elif argument.begins_with("--to="):
 			last = int(argument.trim_prefix("--to="))
 	return Vector2i(first, last)
+
+
+func _requested_track() -> String:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--track="):
+			return argument.trim_prefix("--track=")
+	return "main"

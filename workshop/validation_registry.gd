@@ -7,12 +7,12 @@ var configuration: Dictionary = {}
 var last_error := ""
 
 
-func load_checks() -> bool:
+func load_checks(path: String = CHECKS_PATH) -> bool:
 	last_error = ""
-	if not FileAccess.file_exists(CHECKS_PATH):
-		last_error = "缺少验证配置：%s" % CHECKS_PATH
+	if not FileAccess.file_exists(path):
+		last_error = "缺少验证配置：%s" % path
 		return false
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(CHECKS_PATH))
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	if not (parsed is Dictionary):
 		last_error = "验证配置不是有效 JSON。"
 		return false

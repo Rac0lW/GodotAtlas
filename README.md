@@ -69,7 +69,7 @@ tests/                  结构测试与真实 GPU 渲染测试
 docs/                   课程、架构、来源和设计说明
 ```
 
-界面规范见 [DESIGN.md](DESIGN.md)，运行时职责见 [架构说明](docs/ARCHITECTURE.md)。
+界面规范见 [DESIGN.md](DESIGN.md)，运行时职责见 [架构说明](docs/ARCHITECTURE.md)，完整数据流见 [数据流文档](docs/DATA_FLOW.md)。
 
 ## 验证项目
 

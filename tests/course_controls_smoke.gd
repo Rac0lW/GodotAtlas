@@ -21,10 +21,11 @@ func _run() -> void:
 	_test_developer_mode()
 	_test_camera_rotation()
 	_test_validation_camera_isolation()
+	_test_prep_track()
 	_remove_tree(temp_root)
 
 	if failures.is_empty():
-		print("COURSE_CONTROLS_SMOKE_OK global_reset=pass developer_mode=pass camera_rotation=pass validation_camera=pass")
+		print("COURSE_CONTROLS_SMOKE_OK global_reset=pass developer_mode=pass camera_rotation=pass validation_camera=pass prep_track=pass")
 		quit(0)
 		return
 	for failure in failures:
@@ -51,6 +52,7 @@ func _test_global_reset() -> void:
 	var progress = ProgressStoreScript.new(fixture_root.path_join("progress.json"))
 	progress.load_progress("01_fixture")
 	progress.mark_complete("01_fixture")
+	progress.mark_complete("prep_fixture", "prep")
 	progress.reveal_next_hint("01_fixture", 3)
 	var workspace = ShaderWorkspaceScript.new()
 	var backup_result: Dictionary = workspace.create_backup_directory(fixture_root.path_join("backups"))
@@ -69,6 +71,7 @@ func _test_global_reset() -> void:
 
 	_expect(progress.reset_all("01_fixture"), "global reset did not save fresh progress")
 	_expect(progress.completion_count() == 0, "global reset did not clear completed exercises")
+	_expect(progress.completion_count("prep") == 0, "global reset did not clear prep completion")
 	_expect(progress.get_revealed_hint_count("01_fixture") == 0, "global reset did not clear revealed hints")
 	_expect(progress.data.get("current_id", "") == "01_fixture", "global reset did not return to the first exercise")
 
@@ -150,6 +153,32 @@ func _test_validation_camera_isolation() -> void:
 	interactive_fixture.queue_free()
 	validation_fixture.queue_free()
 	app.free()
+
+
+func _test_prep_track() -> void:
+	var session = CourseSessionScript.new()
+	session.progress = ProgressStoreScript.new(temp_root.path_join("prep-progress.json"))
+	_expect(session.initialize(), "prep track could not initialize with the main course")
+	_expect(session.repository.prep_exercises.size() == 5, "prep track should contain five exercises")
+	if session.repository.prep_exercises.is_empty():
+		session.free()
+		return
+
+	var first_id: String = session.repository.get_prep_exercise_at(0).get("id", "")
+	var second_id: String = session.repository.get_prep_exercise_at(1).get("id", "")
+	_expect(session.select_prep_exercise(first_id, false), "could not open the first prep exercise")
+	_expect(session.current_track == "prep", "opening a prep exercise did not switch tracks")
+	_expect(session.is_locked(second_id, "prep"), "prep prerequisites should lock the second exercise")
+	session.progress.mark_complete(first_id, "prep")
+	_expect(not session.is_locked(second_id, "prep"), "completing a prep exercise did not unlock the next one")
+	_expect(session.progress.completion_count("main") == 0, "prep completion leaked into main progress")
+	_expect(session.select_prep_exercise(second_id), "could not advance to the unlocked prep exercise")
+	session.free()
+	var restored = CourseSessionScript.new()
+	restored.progress = ProgressStoreScript.new(temp_root.path_join("prep-progress.json"))
+	_expect(restored.initialize(), "prep track could not restore its saved session")
+	_expect(restored.current_track == "prep" and restored.current_entry.get("id", "") == second_id, "saved prep session did not reopen in prep")
+	restored.free()
 
 
 func _expect(condition: bool, message: String) -> void:

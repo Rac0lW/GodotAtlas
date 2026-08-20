@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "track_id": "shader_atlas_prep",
+  "title": "Shader Atlas 预科版",
+  "subtitle": "先熟悉颜色、坐标和预览，再进入 32 题主课",
+  "exercise_count": 5,
+  "modules": [
+    {
+      "id": "prep_foundation",
+      "number": 0,
+      "title": "预科版",
+      "subtitle": "每次只练一个概念",
+      "exercises": [
+        {"id":"prep_01_output","number":1,"title":"让像素发光","summary":"认识 Shader 文件和 COLOR 输出。","preview":"canvas","validation":"visual","prerequisite":""},
+        {"id":"prep_02_coordinates","number":2,"title":"读懂 UV","summary":"用二维坐标给画面上色。","preview":"canvas","validation":"visual","prerequisite":"prep_01_output"},
+        {"id":"prep_03_blend","number":3,"title":"混合两种颜色","summary":"用 mix 把两个颜色连接起来。","preview":"canvas","validation":"visual","prerequisite":"prep_02_coordinates"},
+        {"id":"prep_04_mask","number":4,"title":"做一条软边","summary":"用 smoothstep 做出柔和遮罩。","preview":"canvas","validation":"visual","prerequisite":"prep_03_blend"},
+        {"id":"prep_05_spatial_bridge","number":5,"title":"看见三维对象","summary":"认识 ALBEDO，准备进入空间 Shader。","preview":"spatial_sphere","validation":"visual","prerequisite":"prep_04_mask"}
+      ]
+    }
+  ]
+}

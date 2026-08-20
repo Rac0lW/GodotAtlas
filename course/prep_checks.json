@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "defaults": {
+    "visual": {
+      "sample_size": 64,
+      "mean_error": 0.006,
+      "pixel_error": 0.035,
+      "max_bad_pixel_ratio": 0.02,
+      "settle_frames": 4
+    },
+    "contracts": {"required": [], "forbidden": []},
+    "manual_checklist": []
+  },
+  "exercises": {
+    "prep_01_output": {"mode":"visual"},
+    "prep_02_coordinates": {"mode":"visual"},
+    "prep_03_blend": {"mode":"visual"},
+    "prep_04_mask": {"mode":"visual"},
+    "prep_05_spatial_bridge": {"mode":"visual"}
+  }
+}

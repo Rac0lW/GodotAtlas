@@ -17,8 +17,10 @@ var nav_panel: PanelContainer
 var lesson_panel: PanelContainer
 var nav_list: VBoxContainer
 var nav_rows: Dictionary = {}
+var prep_nav_rows: Dictionary = {}
 var progress_bar: ProgressBar
 var progress_count: Label
+var prep_progress_count: Label
 var asset_status_label: Label
 
 var breadcrumb_label: Label
@@ -140,7 +142,7 @@ func _build_navigation_panel(parent: HBoxContainer) -> void:
 	progress_column.add_theme_constant_override("separation", 8)
 	var progress_header := HBoxContainer.new()
 	var progress_title := Label.new()
-	progress_title.text = "课程进度"
+	progress_title.text = "主课进度"
 	progress_title.theme_type_variation = "SecondaryLabel"
 	progress_header.add_child(progress_title)
 	progress_header.add_spacer(false)
@@ -156,6 +158,17 @@ func _build_navigation_panel(parent: HBoxContainer) -> void:
 	progress_bar.show_percentage = false
 	progress_bar.custom_minimum_size = Vector2(0.0, 7.0)
 	progress_column.add_child(progress_bar)
+	var prep_progress_row := HBoxContainer.new()
+	var prep_progress_title := Label.new()
+	prep_progress_title.text = "预科入口"
+	prep_progress_title.theme_type_variation = "MutedLabel"
+	prep_progress_row.add_child(prep_progress_title)
+	prep_progress_row.add_spacer(false)
+	prep_progress_count = Label.new()
+	prep_progress_count.text = "00 / 05"
+	prep_progress_count.theme_type_variation = "MonoLabel"
+	prep_progress_row.add_child(prep_progress_count)
+	progress_column.add_child(prep_progress_row)
 	column.add_child(_margin_wrap(progress_column, 16, 14, 16, 14))
 	column.add_child(_make_divider())
 	var utility_row := HBoxContainer.new()
@@ -178,7 +191,7 @@ func _build_navigation_panel(parent: HBoxContainer) -> void:
 	var global_reset_column := VBoxContainer.new()
 	global_reset_column.add_theme_constant_override("separation", 8)
 	global_reset_copy = Label.new()
-	global_reset_copy.text = "备份 32 题代码，清空进度与提示，回到第 1 题。"
+	global_reset_copy.text = "备份主课与预科代码，清空进度与提示，回到主课第 1 题。"
 	global_reset_copy.theme_type_variation = "SecondaryLabel"
 	global_reset_copy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	global_reset_column.add_child(global_reset_copy)
@@ -438,49 +451,61 @@ func _build_preview_panel(parent: HSplitContainer) -> void:
 func _build_navigation() -> void:
 	_clear_children(nav_list)
 	nav_rows.clear()
+	prep_nav_rows.clear()
+	for module_data in session.repository.prep_modules:
+		_append_navigation_module(module_data, prep_nav_rows, "prep")
 	for module_data in session.repository.modules:
-		var module_header := HBoxContainer.new()
-		module_header.add_theme_constant_override("separation", 8)
-		var module_number := Label.new()
-		module_number.text = "%02d" % int(module_data.get("number", 0))
-		module_number.theme_type_variation = "AmberLabel"
-		module_header.add_child(module_number)
-		var module_title := Label.new()
-		module_title.text = module_data.get("title", "")
-		module_title.theme_type_variation = "SectionHeading"
-		module_header.add_child(module_title)
-		nav_list.add_child(_margin_wrap(module_header, 6, 9, 6, 5))
+		_append_navigation_module(module_data, nav_rows, "main")
 
-		for exercise_data in module_data.get("exercises", []):
-			var exercise_id: String = exercise_data.get("id", "")
-			var row := HBoxContainer.new()
-			row.add_theme_constant_override("separation", 8)
-			var dot := PanelContainer.new()
-			dot.custom_minimum_size = Vector2(6.0, 6.0)
-			dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			var dot_style := _dot_style(AtlasThemeScript.HAIRLINE, 6.0)
-			dot.add_theme_stylebox_override("panel", dot_style)
-			row.add_child(dot)
 
-			var button := _new_button("%02d  %s" % [int(exercise_data.get("number", 0)), exercise_data.get("title", "")], "NavButton")
-			button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-			button.toggle_mode = true
-			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			button.tooltip_text = exercise_data.get("summary", "")
+func _append_navigation_module(module_data: Dictionary, rows: Dictionary, track: String) -> void:
+	var module_header := HBoxContainer.new()
+	module_header.add_theme_constant_override("separation", 8)
+	var module_number := Label.new()
+	module_number.text = "P%02d" % int(module_data.get("number", 0)) if track == "prep" else "%02d" % int(module_data.get("number", 0))
+	module_number.theme_type_variation = "AmberLabel"
+	module_header.add_child(module_number)
+	var module_title := Label.new()
+	module_title.text = module_data.get("title", "")
+	module_title.theme_type_variation = "SectionHeading"
+	module_header.add_child(module_title)
+	nav_list.add_child(_margin_wrap(module_header, 6, 9, 6, 5))
+
+	for exercise_data in module_data.get("exercises", []):
+		var exercise_id: String = exercise_data.get("id", "")
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var dot := PanelContainer.new()
+		dot.custom_minimum_size = Vector2(6.0, 6.0)
+		dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var dot_style := _dot_style(AtlasThemeScript.HAIRLINE, 6.0)
+		dot.add_theme_stylebox_override("panel", dot_style)
+		row.add_child(dot)
+
+		var number_label := "P%02d" % int(exercise_data.get("number", 0)) if track == "prep" else "%02d" % int(exercise_data.get("number", 0))
+		var button := _new_button("%s  %s" % [number_label, exercise_data.get("title", "")], "NavButton")
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.toggle_mode = true
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.tooltip_text = exercise_data.get("summary", "")
+		if track == "prep":
+			button.pressed.connect(_select_prep_exercise.bind(exercise_id))
+		else:
 			button.pressed.connect(_select_exercise.bind(exercise_id))
-			row.add_child(button)
-			nav_list.add_child(row)
-			nav_rows[exercise_id] = {"button": button, "dot_style": dot_style}
+		row.add_child(button)
+		nav_list.add_child(row)
+		rows[exercise_id] = {"button": button, "dot_style": dot_style}
 
 
 func _on_exercise_changed(entry: Dictionary, lesson: Dictionary, shader: Shader) -> void:
 	var exercise_id: String = entry.get("id", "")
 	var number: int = entry.get("number", 0)
-	var module_data: Dictionary = session.repository.get_module_for(exercise_id)
-	breadcrumb_label.text = "M%02d / %02d" % [int(module_data.get("number", 0)), number]
-	source_path_label.text = "exercises/%s/exercise.gdshader" % exercise_id
+	var is_prep: bool = session.current_track == "prep"
+	var module_data: Dictionary = session.repository.get_prep_module_for(exercise_id) if is_prep else session.repository.get_module_for(exercise_id)
+	breadcrumb_label.text = "PREP / %02d" % number if is_prep else "M%02d / %02d" % [int(module_data.get("number", 0)), number]
+	source_path_label.text = str(entry.get("exercise_path", "")).trim_prefix("res://")
 	source_path_label.tooltip_text = session.workspace.absolute_source_path()
-	exercise_meta_label.text = "MODULE %02d · EXERCISE %02d / 32" % [int(module_data.get("number", 0)), number]
+	exercise_meta_label.text = "预科 · 练习 %02d / 05" % number if is_prep else "MODULE %02d · EXERCISE %02d / 32" % [int(module_data.get("number", 0)), number]
 	exercise_title_label.text = entry.get("title", "")
 	lesson_lead.text = markdown.body(lesson.get("lead", ""))
 	preview_kind_label.text = "%s · 512²" % entry.get("preview", "canvas").to_upper()
@@ -592,22 +617,28 @@ func _build_manual_checklist() -> void:
 func _refresh_progress() -> void:
 	if session == null or session.progress.data.is_empty():
 		return
-	var count: int = session.progress.completion_count()
+	var count: int = session.progress.completion_count("main")
 	progress_bar.value = count
 	progress_count.text = "%02d / 32" % count
+	prep_progress_count.text = "%02d / 05" % session.progress.completion_count("prep")
 
 
 func _refresh_navigation_state() -> void:
 	if session == null or session.current_entry.is_empty():
 		return
 	var current_id: String = session.current_entry.get("id", "")
-	for exercise_id in nav_rows:
-		var row: Dictionary = nav_rows[exercise_id]
+	_refresh_navigation_rows(nav_rows, "main", current_id)
+	_refresh_navigation_rows(prep_nav_rows, "prep", current_id)
+
+
+func _refresh_navigation_rows(rows: Dictionary, track: String, current_id: String) -> void:
+	for exercise_id in rows:
+		var row: Dictionary = rows[exercise_id]
 		var button: Button = row.button
 		var dot_style: StyleBoxFlat = row.dot_style
-		var is_current: bool = exercise_id == current_id
-		var is_complete: bool = session.progress.is_complete(exercise_id)
-		var is_locked: bool = session.is_locked(exercise_id)
+		var is_current: bool = session.current_track == track and exercise_id == current_id
+		var is_complete: bool = session.progress.is_complete(exercise_id, track)
+		var is_locked: bool = session.is_locked(exercise_id, track)
 		button.set_pressed_no_signal(is_current)
 		button.disabled = is_locked and not is_current
 		if is_current:
@@ -624,11 +655,11 @@ func _refresh_exercise_actions() -> void:
 	if session == null or session.current_entry.is_empty():
 		return
 	var exercise_id: String = session.current_entry.get("id", "")
-	var is_complete: bool = session.progress.is_complete(exercise_id)
+	var is_complete: bool = session.progress.is_complete(exercise_id, session.current_track)
 	exercise_state_label.text = "已通过" if is_complete else "进行中"
 	exercise_state_label.theme_type_variation = "SuccessLabel" if is_complete else "AmberLabel"
 
-	var revealed: int = session.progress.get_revealed_hint_count(exercise_id)
+	var revealed: int = session.progress.get_revealed_hint_count(exercise_id, session.current_track)
 	var total: int = session.current_lesson.get("hints", []).size()
 	hint_button.text = "提示 %d/%d" % [revealed, total]
 	hint_button.disabled = revealed >= total
@@ -636,7 +667,7 @@ func _refresh_exercise_actions() -> void:
 	var previous: Dictionary = session.previous_exercise()
 	var next: Dictionary = session.next_exercise()
 	previous_button.disabled = previous.is_empty()
-	next_button.disabled = next.is_empty() or session.is_locked(next.get("id", ""))
+	next_button.disabled = next.is_empty() or session.is_locked(next.get("id", ""), session.current_track)
 
 
 func _select_exercise(exercise_id: String) -> void:
@@ -645,16 +676,28 @@ func _select_exercise(exercise_id: String) -> void:
 	session.select_exercise(exercise_id)
 
 
+func _select_prep_exercise(exercise_id: String) -> void:
+	if validation_busy:
+		return
+	session.select_prep_exercise(exercise_id)
+
+
 func _go_previous() -> void:
 	var entry: Dictionary = session.previous_exercise()
 	if not entry.is_empty():
-		session.select_exercise(entry.get("id", ""), false)
+		if session.current_track == "prep":
+			session.select_prep_exercise(entry.get("id", ""), false)
+		else:
+			session.select_exercise(entry.get("id", ""), false)
 
 
 func _go_next() -> void:
 	var entry: Dictionary = session.next_exercise()
-	if not entry.is_empty() and not session.is_locked(entry.get("id", "")):
-		session.select_exercise(entry.get("id", ""))
+	if not entry.is_empty() and not session.is_locked(entry.get("id", ""), session.current_track):
+		if session.current_track == "prep":
+			session.select_prep_exercise(entry.get("id", ""))
+		else:
+			session.select_exercise(entry.get("id", ""))
 
 
 func _reveal_hint() -> void:
@@ -750,7 +793,7 @@ func _run_validation() -> void:
 		for _frame in range(settle_frames):
 			await get_tree().process_frame
 		await RenderingServer.frame_post_draw
-		visual_result = session.validation.compare_images(
+		visual_result = session.current_validation().compare_images(
 			session.current_entry.get("id", ""),
 			_actual_validation_snapshot(),
 			reference_fixture.snapshot()
