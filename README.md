@@ -1,6 +1,6 @@
 # Shader Atlas
 
-Shader Atlas 是一套 Godot 4.7.1 原生交互式 Shader 课程。课程目录的早期骨架参考了《Godot 着色器圣经》从网格、光照到程序化效果和后处理的主题顺序；32 个练习的讲义、代码、预览和验证均由本项目重新设计。练习系统还借鉴了 `100-exercises-to-learn-rust` 的短练习、独立解答和自动反馈结构。
+Shader Atlas 是一套 Godot 4.7.1 原生交互式 Shader 课程。课程目录的早期骨架参考了《Godot 着色器圣经》从网格、光照到程序化效果和后处理的主题顺序；38 个主课练习和 9 个预科练习的讲义、代码、预览和验证均由本项目重新设计。练习系统还借鉴了 `100-exercises-to-learn-rust` 的短练习、独立解答和自动反馈结构。
 
 ![Shader Atlas 1440×900 界面](docs/screenshots/shader-atlas-1440.png)
 
@@ -28,7 +28,7 @@ Shader Atlas 是一套 Godot 4.7.1 原生交互式 Shader 课程。课程目录�
 | 下一题 | `Alt+Right` |
 | 取消重置确认 | `Esc` |
 
-每题提供三级提示。当前练习与全局重置都需要二次确认；全局重置会先备份全部 32 题代码和进度，再恢复 starter、清空完成记录与提示并回到第 1 题。备份位于 `user://shader_atlas/backups`。参考解答位于 `solutions/`，不会覆盖学习者文件。
+每题提供三级提示。当前练习与全局重置都需要二次确认；全局重置会先备份全部 38 题主课代码和 9 题预科代码及进度，再恢复 starter、清空完成记录与提示并回到第 1 题。备份位于 `user://shader_atlas/backups`。参考解答位于 `solutions/`，不会覆盖学习者文件。
 
 ## 课程结构
 
@@ -38,6 +38,8 @@ Shader Atlas 是一套 Godot 4.7.1 原生交互式 Shader 课程。课程目录�
 - 模块 3：SDF、程序化角色、时间动画、顶点波、UI 扫光与四元数。
 - 模块 4：后处理、Shadertoy 移植、透明度、光线步进与模板缓冲。
 - 模块 5：组合顶点脉动、Fresnel 和溶解的综合挑战。
+- 模块 6：可复现随机、Value Noise、Voronoi、fBm 与屏幕纹理 UV 扰动。
+- 预科桥接：step/smoothstep、中心坐标、TIME 波形和 uniform 参数。
 
 完整映射见 [课程蓝图](docs/CURRICULUM.md)，来源与私人使用边界见 [来源与改编方法](docs/SOURCES_AND_METHOD.md)。
 
@@ -85,6 +87,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\validate_course.
 godot --path . --rendering-driver d3d12 --script res://tests/shader_render_smoke.gd -- --from=1 --to=10
 godot --path . --rendering-driver d3d12 --script res://tests/shader_render_smoke.gd -- --from=11 --to=20
 godot --path . --rendering-driver d3d12 --script res://tests/shader_render_smoke.gd -- --from=21 --to=32
+godot --path . --rendering-driver d3d12 --script res://tests/shader_render_smoke.gd -- --from=33 --to=38
 ```
 
 每批都会确认 solution 通过视觉比较，并确认 starter 不会误通过。第 31 题使用模板契约与人工观察清单。

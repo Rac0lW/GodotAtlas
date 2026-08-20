@@ -12,6 +12,10 @@
 - 远于 `fade_far` 时完全透明。
 - 移动模型和移动相机产生一致的相对距离结果。
 
+## 固定数值目标
+
+`base_color` 默认值为 `vec4(0.12, 0.68, 0.58, 1.0)`，边缘光额外使用 `vec3(0.15, 0.35, 0.3)`。`fade_near` 与 `fade_far` 默认值分别为 `2.0` 与 `5.0`。
+
 ## 提示 1
 
 世界位置仍由 `MODEL_MATRIX * vec4(VERTEX, 1.0)` 得到。
@@ -23,4 +27,3 @@
 ## 提示 3
 
 Alpha 为 `1.0 - smoothstep(fade_near, fade_far, camera_distance)`。
-

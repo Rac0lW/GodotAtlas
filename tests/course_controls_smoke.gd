@@ -159,7 +159,7 @@ func _test_prep_track() -> void:
 	var session = CourseSessionScript.new()
 	session.progress = ProgressStoreScript.new(temp_root.path_join("prep-progress.json"))
 	_expect(session.initialize(), "prep track could not initialize with the main course")
-	_expect(session.repository.prep_exercises.size() == 5, "prep track should contain five exercises")
+	_expect(session.repository.prep_exercises.size() == 9, "prep track should contain nine exercises")
 	if session.repository.prep_exercises.is_empty():
 		session.free()
 		return

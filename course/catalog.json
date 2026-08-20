@@ -5,7 +5,7 @@
   "subtitle": "在真实 Godot 渲染管线里学习着色器",
   "engine": "Godot 4.7.1",
   "renderer": "Forward+",
-  "exercise_count": 32,
+  "exercise_count": 38,
   "modules": [
     {
       "id": "m0_signal",
@@ -85,6 +85,20 @@
       "subtitle": "把独立技巧组织成一个有意图的效果",
       "exercises": [
         {"id":"32_signal_storm","number":32,"title":"信号风暴","summary":"组合顶点脉动、Fresnel 和程序化溶解。","preview":"spatial_sphere","validation":"visual_manual","prerequisite":"31_stencil_portal"}
+      ]
+    },
+    {
+      "id": "m6_textures",
+      "number": 6,
+      "title": "程序化纹理扩展",
+      "subtitle": "从可复现随机到噪声、细胞和纹理采样",
+      "exercises": [
+        {"id":"33_hash_random","number":33,"title":"可复现随机","summary":"用 UV 网格和 hash 函数生成稳定随机值。","preview":"canvas","validation":"visual","prerequisite":"20_sdf_shapes"},
+        {"id":"34_value_noise","number":34,"title":"Value Noise","summary":"插值网格角点，得到连续的灰度噪声。","preview":"canvas","validation":"visual","prerequisite":"33_hash_random"},
+        {"id":"35_voronoi_cells","number":35,"title":"Voronoi 细胞","summary":"搜索邻近特征点，把距离场组织成细胞结构。","preview":"canvas","validation":"visual","prerequisite":"34_value_noise"},
+        {"id":"36_fbm_layers","number":36,"title":"fBm 分形叠层","summary":"叠加多个频率和振幅，得到有尺度感的纹理。","preview":"canvas","validation":"visual","prerequisite":"35_voronoi_cells"},
+        {"id":"37_texture_sample","number":37,"title":"纹理采样","summary":"读取屏幕纹理，理解 sampler2D 与 UV 采样。","preview":"post","validation":"visual_contract","prerequisite":"36_fbm_layers"},
+        {"id":"38_uv_warp","number":38,"title":"UV 扰动","summary":"先扰动采样坐标，再把噪声用于画面变形。","preview":"post","validation":"visual_contract","prerequisite":"37_texture_sample"}
       ]
     }
   ]

@@ -10,8 +10,8 @@ flowchart TD
     scene --> app["WorkshopApp<br/>三栏工作台"]
 
     subgraph course_data["课程数据 res://"]
-        main_catalog["course/catalog.json<br/>主课 32 题"]
-        prep_catalog["course/prep_catalog.json<br/>预科 5 题"]
+        main_catalog["course/catalog.json<br/>主课 38 题"]
+        prep_catalog["course/prep_catalog.json<br/>预科 9 题"]
         main_checks["course/checks.json"]
         prep_checks["course/prep_checks.json"]
         lessons["README.md<br/>任务、验收、提示"]

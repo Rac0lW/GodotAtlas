@@ -147,13 +147,13 @@ func _build_navigation_panel(parent: HBoxContainer) -> void:
 	progress_header.add_child(progress_title)
 	progress_header.add_spacer(false)
 	progress_count = Label.new()
-	progress_count.text = "00 / 32"
+	progress_count.text = "00 / --"
 	progress_count.theme_type_variation = "MonoLabel"
 	progress_header.add_child(progress_count)
 	progress_column.add_child(progress_header)
 	progress_bar = ProgressBar.new()
 	progress_bar.min_value = 0.0
-	progress_bar.max_value = 32.0
+	progress_bar.max_value = 0.0
 	progress_bar.value = 0.0
 	progress_bar.show_percentage = false
 	progress_bar.custom_minimum_size = Vector2(0.0, 7.0)
@@ -165,7 +165,7 @@ func _build_navigation_panel(parent: HBoxContainer) -> void:
 	prep_progress_row.add_child(prep_progress_title)
 	prep_progress_row.add_spacer(false)
 	prep_progress_count = Label.new()
-	prep_progress_count.text = "00 / 05"
+	prep_progress_count.text = "00 / --"
 	prep_progress_count.theme_type_variation = "MonoLabel"
 	prep_progress_row.add_child(prep_progress_count)
 	progress_column.add_child(prep_progress_row)
@@ -505,7 +505,8 @@ func _on_exercise_changed(entry: Dictionary, lesson: Dictionary, shader: Shader)
 	breadcrumb_label.text = "PREP / %02d" % number if is_prep else "M%02d / %02d" % [int(module_data.get("number", 0)), number]
 	source_path_label.text = str(entry.get("exercise_path", "")).trim_prefix("res://")
 	source_path_label.tooltip_text = session.workspace.absolute_source_path()
-	exercise_meta_label.text = "预科 · 练习 %02d / 05" % number if is_prep else "MODULE %02d · EXERCISE %02d / 32" % [int(module_data.get("number", 0)), number]
+	var total: int = session.repository.prep_exercises.size() if is_prep else session.repository.exercises.size()
+	exercise_meta_label.text = "预科 · 练习 %02d / %02d" % [number, total] if is_prep else "MODULE %02d · EXERCISE %02d / %02d" % [int(module_data.get("number", 0)), number, total]
 	exercise_title_label.text = entry.get("title", "")
 	lesson_lead.text = markdown.body(lesson.get("lead", ""))
 	preview_kind_label.text = "%s · 512²" % entry.get("preview", "canvas").to_upper()
@@ -618,9 +619,12 @@ func _refresh_progress() -> void:
 	if session == null or session.progress.data.is_empty():
 		return
 	var count: int = session.progress.completion_count("main")
+	var main_total: int = session.repository.exercises.size()
+	var prep_total: int = session.repository.prep_exercises.size()
+	progress_bar.max_value = main_total
 	progress_bar.value = count
-	progress_count.text = "%02d / 32" % count
-	prep_progress_count.text = "%02d / 05" % session.progress.completion_count("prep")
+	progress_count.text = "%02d / %02d" % [count, main_total]
+	prep_progress_count.text = "%02d / %02d" % [session.progress.completion_count("prep"), prep_total]
 
 
 func _refresh_navigation_state() -> void:

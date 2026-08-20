@@ -12,6 +12,10 @@
 - 高光仍受法线朝光程度限制。
 - 切线和次切线在使用前归一化。
 
+## 固定数值目标
+
+`base_color` 默认值为 `vec4(0.32, 0.12, 0.055, 1.0)`，`ROUGHNESS` 固定为 `0.35`，`tangent_sharpness` 与 `binormal_sharpness` 默认值分别为 `8.0` 与 `42.0`。
+
 ## 提示 1
 
 需要半程向量 `normalize(LIGHT + VIEW)`。
@@ -23,4 +27,3 @@
 ## 提示 3
 
 可以用 `exp(-tangent_term - binormal_term)` 得到平滑高光。
-

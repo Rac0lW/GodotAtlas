@@ -13,9 +13,6 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var track := _requested_track()
-	var bounds := _requested_bounds(track)
-	var first_number: int = bounds.x
-	var last_number: int = bounds.y
 	var repository := CourseRepositoryScript.new()
 	var validation := ValidationRegistryScript.new()
 	if not repository.load_course():
@@ -42,6 +39,9 @@ func _run() -> void:
 	fixture_root.add_child(learner)
 	fixture_root.add_child(reference)
 	var entries: Array = repository.prep_exercises if track == "prep" else repository.exercises
+	var bounds := _requested_bounds(track, entries.size())
+	var first_number: int = bounds.x
+	var last_number: int = bounds.y
 
 	var rendered_count := 0
 	for entry in entries:
@@ -107,9 +107,9 @@ func _settle(frame_count: int) -> void:
 	await RenderingServer.frame_post_draw
 
 
-func _requested_bounds(track: String) -> Vector2i:
+func _requested_bounds(track: String, exercise_count: int) -> Vector2i:
 	var first := 1
-	var last := 5 if track == "prep" else 32
+	var last := exercise_count
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--from="):
 			first = int(argument.trim_prefix("--from="))

@@ -13,9 +13,27 @@
   },
   "exercises": {
     "prep_01_output": {"mode":"visual"},
-    "prep_02_coordinates": {"mode":"visual"},
+    "prep_02_coordinates": {
+      "mode":"visual",
+      "documentation_targets":["vec4(UV.x, UV.y, 0.35, 1.0)"]
+    },
     "prep_03_blend": {"mode":"visual"},
     "prep_04_mask": {"mode":"visual"},
-    "prep_05_spatial_bridge": {"mode":"visual"}
+    "prep_05_spatial_bridge": {"mode":"visual"},
+    "prep_06_step_smooth": {
+      "mode":"visual_contract",
+      "documentation_targets":["vec4(hard_edge, soft_edge, 0.18, 1.0)","(1.0, 0.5, 0.18, 1.0)"],
+      "contracts":{"required":[
+        {"label":"调用 step 生成硬边","pattern":"step\\s*\\("},
+        {"label":"调用 smoothstep 生成软边","pattern":"smoothstep\\s*\\("},
+        {"label":"输出固定蓝色通道 0.18","pattern":"COLOR\\s*=\\s*vec4\\(\\s*hard_edge\\s*,\\s*soft_edge\\s*,\\s*0\\.18\\s*,\\s*1\\.0\\s*\\)"}
+      ]}
+    },
+    "prep_07_centered_circle": {"mode":"visual"},
+    "prep_08_time_wave": {"mode":"visual"},
+    "prep_09_uniform_control": {
+      "mode":"visual_contract",
+      "contracts":{"required":[{"label":"声明可编辑的 prep_color uniform","pattern":"uniform\\s+vec4\\s+prep_color"}]}
+    }
   }
 }

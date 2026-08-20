@@ -1,13 +1,12 @@
 shader_type spatial;
 render_mode unshaded;
 
-varying vec3 position_os;
+varying vec3 position_ws;
 
 void vertex() {
-	// TODO: 这里仍然是对象空间。
-	position_os = VERTEX;
+	position_ws = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 
 void fragment() {
-	ALBEDO = fract(position_os * 0.25 + 0.5);
+	ALBEDO = fract(position_ws * 0.25 + 0.5);
 }
