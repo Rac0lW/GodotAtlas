@@ -1,6 +1,6 @@
 # Shader Atlas
 
-![Shader Atlas 项目展示](docs/screenshots/shader-atlas-showcase.png)
+<img src="docs/screenshots/shader-atlas-icon.png" alt="Shader Atlas 项目图标" width="160">
 
 [English documentation](README.md)
 
