@@ -1,8 +1,10 @@
 # Shader Atlas
 
+![Shader Atlas project showcase](docs/screenshots/shader-atlas-showcase.png)
+
 [中文文档](README.zh-CN.md)
 
-Shader Atlas is a native Godot 4.7.1 interactive Shader course. Its early curriculum skeleton follows the topic order of *The Book of Godot Shaders*, from meshes and lighting through procedural effects and post-processing; this project redesigns the lessons, code, previews, and validation for 38 main exercises and 9 prep exercises. The exercise system also borrows the short exercises, standalone solutions, and automatic feedback structure of `100-exercises-to-learn-rust`.
+Shader Atlas is a native Godot 4.7.1 interactive Shader course. Its early curriculum skeleton follows the topic order of [The Book of Shaders](https://thebookofshaders.com/), from meshes and lighting through procedural effects and post-processing; this project redesigns the lessons, code, previews, and validation for 38 main exercises and 9 prep exercises. The exercise system also borrows the short exercises, standalone solutions, and automatic feedback structure of `100-exercises-to-learn-rust`.
 
 ![Shader Atlas 1440×900 interface](docs/screenshots/shader-atlas-1440.png)
 
@@ -42,7 +44,7 @@ Each exercise provides three progressive hints. Resetting the current exercise o
 
 - Module 0: fragment output and uniforms.
 - Module 1: mesh attributes, coordinate spaces, varyings, tangent space, and matrices.
-- Module 2: material channels, Lambert, Blinn–Phong, Fresnel, anisotropy, and normals.
+- Module 2: material channels, Lambert, Blinn-Phong, Fresnel, anisotropy, and normals.
 - Module 3: SDFs, procedural characters, time animation, vertex waves, UI sweeps, and quaternions.
 - Module 4: post-processing, Shadertoy ports, transparency, ray marching, and stencil buffers.
 - Module 5: a capstone combining vertex pulsing, Fresnel, and dissolve.
@@ -50,6 +52,10 @@ Each exercise provides three progressive hints. Resetting the current exercise o
 - Prep bridge: `step`/`smoothstep`, centered coordinates, `TIME` waveforms, and uniform parameters.
 
 See the [curriculum map](docs/CURRICULUM.md) for the complete mapping. See [sources and adaptation method](docs/SOURCES_AND_METHOD.md) for source and private-use boundaries.
+
+## Reference material
+
+[The Book of Shaders](https://thebookofshaders.com/) by Patricio Gonzalez Vivo and Jen Lowe is a gentle, step-by-step guide to fragment shaders. Its progression from shader basics, uniforms, and running a shader through algorithmic drawing, generative design, image processing, simulation, and 3D techniques informed the early topic grouping in Shader Atlas. This project does not reproduce the book chapter by chapter: its lessons, exercises, solutions, previews, and validation rules are rewritten for Godot and private use.
 
 ## Validation
 

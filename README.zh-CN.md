@@ -1,8 +1,10 @@
 # Shader Atlas
 
+![Shader Atlas 项目展示](docs/screenshots/shader-atlas-showcase.png)
+
 [English documentation](README.md)
 
-Shader Atlas 是一套 Godot 4.7.1 原生交互式 Shader 课程。课程目录的早期骨架参考了《Godot 着色器圣经》从网格、光照到程序化效果和后处理的主题顺序；38 个主课练习和 9 个预科练习的讲义、代码、预览和验证均由本项目重新设计。练习系统还借鉴了 `100-exercises-to-learn-rust` 的短练习、独立解答和自动反馈结构。
+Shader Atlas 是一套 Godot 4.7.1 原生交互式 Shader 课程。课程目录的早期骨架参考了 [The Book of Shaders](https://thebookofshaders.com/) 从网格、光照到程序化效果和后处理的主题顺序；38 个主课练习和 9 个预科练习的讲义、代码、预览和验证均由本项目重新设计。练习系统还借鉴了 `100-exercises-to-learn-rust` 的短练习、独立解答和自动反馈结构。
 
 ![Shader Atlas 1440×900 界面](docs/screenshots/shader-atlas-1440.png)
 
@@ -50,6 +52,10 @@ Shader Atlas 是一套 Godot 4.7.1 原生交互式 Shader 课程。课程目录�
 - 预科桥接：step/smoothstep、中心坐标、TIME 波形和 uniform 参数。
 
 完整映射见 [课程蓝图](docs/CURRICULUM.md)，来源与私人使用边界见 [来源与改编方法](docs/SOURCES_AND_METHOD.md)。
+
+## 内容参考
+
+[The Book of Shaders](https://thebookofshaders.com/) 由 Patricio Gonzalez Vivo 与 Jen Lowe 编写，是一份循序渐进介绍 fragment shader 的指南。它从 shader 基础、uniform 和运行 shader 开始，延伸到算法绘图、生成式设计、图像处理、模拟与 3D 技术，影响了 Shader Atlas 早期的主题分组。本项目没有按章节逐章改编，讲义、练习、解答、预览和验证规则均针对 Godot 与私人使用场景重新编写。
 
 ## 验证方式
 
