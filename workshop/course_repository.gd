@@ -91,12 +91,12 @@ func get_prep_module_for(exercise_id: String) -> Dictionary:
 	return prep_module_by_exercise_id.get(exercise_id, {})
 
 
-func read_lesson(exercise_id: String) -> String:
-	return _read_text(readme_path(exercise_id))
+func read_lesson(exercise_id: String, language: String = "zh") -> String:
+	return _read_text(_localized_readme_path(readme_path(exercise_id), language))
 
 
-func read_lesson_for_entry(entry: Dictionary) -> String:
-	return _read_text(entry.get("readme_path", ""))
+func read_lesson_for_entry(entry: Dictionary, language: String = "zh") -> String:
+	return _read_text(_localized_readme_path(entry.get("readme_path", ""), language))
 
 
 func read_current_shader(exercise_id: String) -> String:
@@ -107,14 +107,14 @@ func read_solution_shader(exercise_id: String) -> String:
 	return _read_text(solution_path(exercise_id))
 
 
-func extract_hints(exercise_id: String) -> Array[String]:
+func extract_hints(exercise_id: String, language: String = "zh") -> Array[String]:
 	var hints: Array[String] = []
-	var lesson := read_lesson(exercise_id)
+	var lesson := read_lesson(exercise_id, language)
 	var collecting := false
 	var buffer: PackedStringArray = []
 
 	for line in lesson.split("\n"):
-		if line.begins_with("## 提示"):
+		if line.begins_with("## 提示") or line.begins_with("## Hint"):
 			if collecting and not buffer.is_empty():
 				hints.append("\n".join(buffer).strip_edges())
 			buffer.clear()
@@ -154,6 +154,14 @@ static func starter_path(exercise_id: String) -> String:
 
 static func solution_path(exercise_id: String) -> String:
 	return "%s/%s.gdshader" % [SOLUTIONS_ROOT, exercise_id]
+
+
+static func _localized_readme_path(path: String, language: String) -> String:
+	if language == "en":
+		var english_path := path.trim_suffix(".md") + ".en.md"
+		if FileAccess.file_exists(english_path):
+			return english_path
+	return path
 
 
 static func _read_text(path: String) -> String:

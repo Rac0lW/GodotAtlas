@@ -3,6 +3,7 @@ extends Node
 
 signal session_ready
 signal exercise_changed(entry: Dictionary, lesson: Dictionary, shader: Shader)
+signal lesson_changed(lesson: Dictionary)
 signal source_external_changed(shader: Shader)
 signal progress_changed(progress: Dictionary)
 signal session_error(message: String)
@@ -22,6 +23,7 @@ var current_entry: Dictionary = {}
 var current_lesson: Dictionary = {}
 var current_track := "main"
 var developer_mode := false
+var language := "zh"
 
 
 func _ready() -> void:
@@ -64,6 +66,17 @@ func _process(_delta: float) -> void:
 	if workspace.poll_external_change():
 		var shader := workspace.reload_current()
 		source_external_changed.emit(shader)
+
+
+func set_language(next_language: String) -> void:
+	var normalized := "en" if next_language.to_lower().begins_with("en") else "zh"
+	if language == normalized:
+		return
+	language = normalized
+	if current_entry.is_empty():
+		return
+	current_lesson = lesson_parser.parse(repository.read_lesson_for_entry(current_entry, language))
+	lesson_changed.emit(current_lesson)
 
 
 func select_exercise(exercise_id: String, enforce_prerequisite: bool = true) -> bool:
@@ -205,7 +218,7 @@ func _select_entry(entry: Dictionary, track: String) -> bool:
 
 	current_entry = entry
 	current_track = track
-	current_lesson = lesson_parser.parse(repository.read_lesson_for_entry(entry))
+	current_lesson = lesson_parser.parse(repository.read_lesson_for_entry(entry, language))
 	progress.set_current(entry.get("id", ""), track)
 	var shader := workspace.reload_current()
 	exercise_changed.emit(current_entry, current_lesson, shader)

@@ -2,6 +2,7 @@
   "schema_version": 1,
   "track_id": "shader_atlas_prep",
   "title": "Shader Atlas 预科版",
+  "title_en": "Shader Atlas Prep Track",
   "subtitle": "先熟悉颜色、坐标和预览，再进入 38 题主课",
   "exercise_count": 9,
   "modules": [
@@ -9,25 +10,27 @@
       "id": "prep_foundation",
       "number": 0,
       "title": "预科版",
+      "title_en": "Prep Track",
       "subtitle": "每次只练一个概念",
       "exercises": [
-        {"id":"prep_01_output","number":1,"title":"让像素发光","summary":"认识 Shader 文件和 COLOR 输出。","preview":"canvas","validation":"visual","prerequisite":""},
-        {"id":"prep_02_coordinates","number":2,"title":"读懂 UV","summary":"用二维坐标给画面上色。","preview":"canvas","validation":"visual","prerequisite":"prep_01_output"},
-        {"id":"prep_03_blend","number":3,"title":"混合两种颜色","summary":"用 mix 把两个颜色连接起来。","preview":"canvas","validation":"visual","prerequisite":"prep_02_coordinates"},
-        {"id":"prep_04_mask","number":4,"title":"做一条软边","summary":"用 smoothstep 做出柔和遮罩。","preview":"canvas","validation":"visual","prerequisite":"prep_03_blend"},
-        {"id":"prep_05_spatial_bridge","number":5,"title":"看见三维对象","summary":"认识 ALBEDO，准备进入空间 Shader。","preview":"spatial_sphere","validation":"visual","prerequisite":"prep_04_mask"}
+        {"id":"prep_01_output","number":1,"title":"让像素发光","title_en":"Light Up a Pixel","summary":"认识 Shader 文件和 COLOR 输出。","summary_en":"Meet Shader files and COLOR output.","preview":"canvas","validation":"visual","prerequisite":""},
+        {"id":"prep_02_coordinates","number":2,"title":"读懂 UV","title_en":"Read UV","summary":"用二维坐标给画面上色。","summary_en":"Color the image with 2D coordinates.","preview":"canvas","validation":"visual","prerequisite":"prep_01_output"},
+        {"id":"prep_03_blend","number":3,"title":"混合两种颜色","title_en":"Blend Two Colors","summary":"用 mix 把两个颜色连接起来。","summary_en":"Connect two colors with mix.","preview":"canvas","validation":"visual","prerequisite":"prep_02_coordinates"},
+        {"id":"prep_04_mask","number":4,"title":"做一条软边","title_en":"Make a Soft Edge","summary":"用 smoothstep 做出柔和遮罩。","summary_en":"Make a soft mask with smoothstep.","preview":"canvas","validation":"visual","prerequisite":"prep_03_blend"},
+        {"id":"prep_05_spatial_bridge","number":5,"title":"看见三维对象","title_en":"See a 3D Object","summary":"认识 ALBEDO，准备进入空间 Shader。","summary_en":"Meet ALBEDO before entering spatial Shaders.","preview":"spatial_sphere","validation":"visual","prerequisite":"prep_04_mask"}
       ]
     },
     {
       "id": "prep_bridge",
       "number": 1,
       "title": "算法桥接",
+      "title_en": "Algorithm Bridge",
       "subtitle": "把函数、中心坐标和时间信号串起来",
       "exercises": [
-        {"id":"prep_06_step_smooth","number":6,"title":"硬边与软边","summary":"比较 step 和 smoothstep 的数值边界。","preview":"canvas","validation":"visual_contract","prerequisite":"prep_05_spatial_bridge"},
-        {"id":"prep_07_centered_circle","number":7,"title":"中心坐标与圆形","summary":"把 UV 平移到中心，再用距离生成圆。","preview":"canvas","validation":"visual","prerequisite":"prep_06_step_smooth"},
-        {"id":"prep_08_time_wave","number":8,"title":"让图案动起来","summary":"用 TIME 和 sin 生成可预测的波形。","preview":"canvas","validation":"visual","prerequisite":"prep_07_centered_circle"},
-        {"id":"prep_09_uniform_control","number":9,"title":"把颜色交给参数","summary":"声明一个可编辑 uniform，建立材质控制习惯。","preview":"canvas","validation":"visual_contract","prerequisite":"prep_08_time_wave"}
+        {"id":"prep_06_step_smooth","number":6,"title":"硬边与软边","title_en":"Hard and Soft Edges","summary":"比较 step 和 smoothstep 的数值边界。","summary_en":"Compare the numeric boundaries of step and smoothstep.","preview":"canvas","validation":"visual_contract","prerequisite":"prep_05_spatial_bridge"},
+        {"id":"prep_07_centered_circle","number":7,"title":"中心坐标与圆形","title_en":"Centered Coordinates and a Circle","summary":"把 UV 平移到中心，再用距离生成圆。","summary_en":"Center UV and create a circle from distance.","preview":"canvas","validation":"visual","prerequisite":"prep_06_step_smooth"},
+        {"id":"prep_08_time_wave","number":8,"title":"让图案动起来","title_en":"Animate the Pattern","summary":"用 TIME 和 sin 生成可预测的波形。","summary_en":"Create a predictable wave with TIME and sin.","preview":"canvas","validation":"visual","prerequisite":"prep_07_centered_circle"},
+        {"id":"prep_09_uniform_control","number":9,"title":"把颜色交给参数","title_en":"Hand the Color to a Parameter","summary":"声明一个可编辑 uniform，建立材质控制习惯。","summary_en":"Declare an editable uniform and build material-control habits.","preview":"canvas","validation":"visual_contract","prerequisite":"prep_08_time_wave"}
       ]
     }
   ]

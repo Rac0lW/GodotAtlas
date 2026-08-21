@@ -5,6 +5,7 @@ const ProgressStoreScript = preload("res://workshop/progress_store.gd")
 const ShaderWorkspaceScript = preload("res://workshop/shader_workspace.gd")
 const PreviewFixtureScript = preload("res://workshop/preview_fixture.gd")
 const WorkshopAppScript = preload("res://workshop/workshop_app.gd")
+const AtlasThemeScript = preload("res://workshop/atlas_theme.gd")
 
 var failures: Array[String] = []
 var temp_root := ""
@@ -21,11 +22,14 @@ func _run() -> void:
 	_test_developer_mode()
 	_test_camera_rotation()
 	_test_validation_camera_isolation()
+	_test_language_switch()
+	_test_onboarding()
+	_test_lesson_language()
 	_test_prep_track()
 	_remove_tree(temp_root)
 
 	if failures.is_empty():
-		print("COURSE_CONTROLS_SMOKE_OK global_reset=pass developer_mode=pass camera_rotation=pass validation_camera=pass prep_track=pass")
+		print("COURSE_CONTROLS_SMOKE_OK global_reset=pass developer_mode=pass camera_rotation=pass validation_camera=pass language=pass onboarding=pass prep_track=pass")
 		quit(0)
 		return
 	for failure in failures:
@@ -74,6 +78,11 @@ func _test_global_reset() -> void:
 	_expect(progress.completion_count("prep") == 0, "global reset did not clear prep completion")
 	_expect(progress.get_revealed_hint_count("01_fixture") == 0, "global reset did not clear revealed hints")
 	_expect(progress.data.get("current_id", "") == "01_fixture", "global reset did not return to the first exercise")
+	_expect(not progress.has_seen_onboarding(), "fresh progress unexpectedly marked onboarding as seen")
+	progress.mark_onboarding_seen()
+	_expect(progress.has_seen_onboarding(), "onboarding seen state was not saved")
+	_expect(progress.reset_all("01_fixture"), "global reset did not preserve onboarding state")
+	_expect(progress.has_seen_onboarding(), "global reset unexpectedly reopened onboarding")
 
 	var restore_result: Dictionary = workspace.restore_all_from_backup(entries, backup_directory)
 	_expect(restore_result.get("ok", false), "backup restore failed")
@@ -153,6 +162,54 @@ func _test_validation_camera_isolation() -> void:
 	interactive_fixture.queue_free()
 	validation_fixture.queue_free()
 	app.free()
+
+
+func _test_language_switch() -> void:
+	var app = WorkshopAppScript.new()
+	app._build_shell()
+	_expect(app.language == "zh", "workshop should start in Chinese")
+	app.set_language("en")
+	_expect(app.language == "en", "language switch did not select English")
+	_expect(app.language_button.text == "中文", "English mode did not expose the Chinese switch")
+	_expect(app.language_button.icon != null, "language switch did not expose an icon")
+	app.set_language("zh")
+	_expect(app.language_button.text == "English", "Chinese mode did not expose the English switch")
+	app.free()
+
+
+func _test_onboarding() -> void:
+	var app = WorkshopAppScript.new()
+	get_root().add_child(app)
+	app.theme = AtlasThemeScript.create()
+	app._build_shell()
+	app._build_onboarding()
+	_expect(not app._onboarding_is_open(), "onboarding should start hidden")
+	app._show_onboarding()
+	_expect(app._onboarding_is_open(), "onboarding did not open")
+	app.set_language("en")
+	_expect(app.onboarding_start_button.text == "Start first exercise", "onboarding did not localize to English")
+	var button_style: StyleBox = app.onboarding_start_button.get_theme_stylebox("normal")
+	_expect(button_style.content_margin_left == 12.0 and button_style.content_margin_right == 12.0, "onboarding button did not receive horizontal padding")
+	app._dismiss_onboarding()
+	_expect(not app._onboarding_is_open(), "onboarding did not close")
+	get_root().remove_child(app)
+	app.free()
+
+
+func _test_lesson_language() -> void:
+	var session = CourseSessionScript.new()
+	session.progress = ProgressStoreScript.new(temp_root.path_join("lesson-language-progress.json"))
+	_expect(session.initialize(), "lesson language test could not initialize the course")
+	if session.current_lesson.is_empty():
+		session.free()
+		return
+	_expect(session.current_lesson.get("title", "") == "01 · 第一个片元", "course did not start with the Chinese lesson")
+	session.set_language("en")
+	_expect(session.current_lesson.get("title", "") == "01 · First Fragment", "English lesson was not loaded")
+	_expect(session.current_lesson.get("hints", []).size() == 3, "English lesson hints were not parsed")
+	session.set_language("zh")
+	_expect(session.current_lesson.get("title", "") == "01 · 第一个片元", "Chinese lesson was not restored")
+	session.free()
 
 
 func _test_prep_track() -> void:

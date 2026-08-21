@@ -11,94 +11,101 @@
       "id": "m0_signal",
       "number": 0,
       "title": "启动信号",
+      "title_en": "Signal Start",
       "subtitle": "先让一个像素听懂你的命令",
       "exercises": [
-        {"id":"01_first_fragment","number":1,"title":"第一个片元","summary":"用 UV 生成第一张可验证图像。","preview":"canvas","validation":"visual","prerequisite":""},
-        {"id":"02_uniform_console","number":2,"title":"Uniform 控制台","summary":"把硬编码值变成材质参数。","preview":"canvas","validation":"visual_contract","prerequisite":"01_first_fragment"}
+        {"id":"01_first_fragment","number":1,"title":"第一个片元","title_en":"First Fragment","summary":"用 UV 生成第一张可验证图像。","summary_en":"Generate the first verifiable image from UV.","preview":"canvas","validation":"visual","prerequisite":""},
+        {"id":"02_uniform_console","number":2,"title":"Uniform 控制台","title_en":"Uniform Console","summary":"把硬编码值变成材质参数。","summary_en":"Turn hard-coded values into material parameters.","preview":"canvas","validation":"visual_contract","prerequisite":"01_first_fragment"}
       ]
     },
     {
       "id": "m1_pipeline",
       "number": 1,
       "title": "网格与管线",
+      "title_en": "Mesh and Pipeline",
       "subtitle": "看见数据如何穿过渲染阶段",
       "exercises": [
-        {"id":"03_mesh_attributes","number":3,"title":"看见网格属性","summary":"把法线方向编码成颜色。","preview":"spatial_sphere","validation":"visual","prerequisite":"02_uniform_console"},
-        {"id":"04_coordinate_spaces","number":4,"title":"坐标空间","summary":"区分对象位置和世界位置。","preview":"spatial_sphere","validation":"visual","prerequisite":"03_mesh_attributes"},
-        {"id":"05_pipeline_handoff","number":5,"title":"阶段接力","summary":"使用 varying 跨阶段传递信息。","preview":"spatial_plane","validation":"visual_contract","prerequisite":"04_coordinate_spaces"},
-        {"id":"06_world_gradient","number":6,"title":"世界渐变","summary":"让颜色固定在世界而非模型表面。","preview":"spatial_sphere","validation":"visual","prerequisite":"05_pipeline_handoff"},
-        {"id":"07_tangent_space","number":7,"title":"切线空间","summary":"使用 TBN 转换程序化法线。","preview":"spatial_sphere","validation":"visual","prerequisite":"06_world_gradient"},
-        {"id":"08_mix_mask_alpha","number":8,"title":"混合、遮罩与 Alpha","summary":"构造连续且可抗锯齿的遮罩。","preview":"canvas","validation":"visual","prerequisite":"07_tangent_space"},
-        {"id":"09_billboard","number":9,"title":"Billboard","summary":"使用内置矩阵让平面朝向相机。","preview":"spatial_quad","validation":"visual_manual","prerequisite":"08_mix_mask_alpha"},
-        {"id":"10_custom_matrix","number":10,"title":"自定义矩阵","summary":"亲手构造顶点旋转矩阵。","preview":"spatial_cube","validation":"visual","prerequisite":"09_billboard"}
+        {"id":"03_mesh_attributes","number":3,"title":"看见网格属性","title_en":"See Mesh Attributes","summary":"把法线方向编码成颜色。","summary_en":"Encode normal direction as color.","preview":"spatial_sphere","validation":"visual","prerequisite":"02_uniform_console"},
+        {"id":"04_coordinate_spaces","number":4,"title":"坐标空间","title_en":"Coordinate Spaces","summary":"区分对象位置和世界位置。","summary_en":"Distinguish object position from world position.","preview":"spatial_sphere","validation":"visual","prerequisite":"03_mesh_attributes"},
+        {"id":"05_pipeline_handoff","number":5,"title":"阶段接力","title_en":"Pipeline Handoff","summary":"使用 varying 跨阶段传递信息。","summary_en":"Pass information between stages with a varying.","preview":"spatial_plane","validation":"visual_contract","prerequisite":"04_coordinate_spaces"},
+        {"id":"06_world_gradient","number":6,"title":"世界渐变","title_en":"World Gradient","summary":"让颜色固定在世界而非模型表面。","summary_en":"Anchor color in the world instead of the model surface.","preview":"spatial_sphere","validation":"visual","prerequisite":"05_pipeline_handoff"},
+        {"id":"07_tangent_space","number":7,"title":"切线空间","title_en":"Tangent Space","summary":"使用 TBN 转换程序化法线。","summary_en":"Transform a procedural normal with TBN.","preview":"spatial_sphere","validation":"visual","prerequisite":"06_world_gradient"},
+        {"id":"08_mix_mask_alpha","number":8,"title":"混合、遮罩与 Alpha","title_en":"Mix, Mask, and Alpha","summary":"构造连续且可抗锯齿的遮罩。","summary_en":"Build a continuous anti-aliased mask.","preview":"canvas","validation":"visual","prerequisite":"07_tangent_space"},
+        {"id":"09_billboard","number":9,"title":"Billboard","title_en":"Billboard","summary":"使用内置矩阵让平面朝向相机。","summary_en":"Use built-in matrices to face a plane toward the camera.","preview":"spatial_quad","validation":"visual_manual","prerequisite":"08_mix_mask_alpha"},
+        {"id":"10_custom_matrix","number":10,"title":"自定义矩阵","title_en":"Custom Matrix","summary":"亲手构造顶点旋转矩阵。","summary_en":"Build a vertex rotation matrix by hand.","preview":"spatial_cube","validation":"visual","prerequisite":"09_billboard"}
       ]
     },
     {
       "id": "m2_lighting",
       "number": 2,
       "title": "光照实验室",
+      "title_en": "Lighting Lab",
       "subtitle": "把方向、能量和材质写成公式",
       "exercises": [
-        {"id":"11_material_channels","number":11,"title":"材质通道","summary":"控制基础色、粗糙度和金属度。","preview":"spatial_sphere","validation":"visual_contract","prerequisite":"10_custom_matrix"},
-        {"id":"12_lambert","number":12,"title":"Lambert","summary":"从点积开始实现漫反射。","preview":"spatial_sphere","validation":"visual","prerequisite":"11_material_channels"},
-        {"id":"13_dot_probe","number":13,"title":"点积探针","summary":"把夹角关系显示为灰度。","preview":"spatial_sphere","validation":"visual","prerequisite":"12_lambert"},
-        {"id":"14_blinn_phong","number":14,"title":"Blinn-Phong","summary":"使用半程向量建立高光。","preview":"spatial_sphere","validation":"visual","prerequisite":"13_dot_probe"},
-        {"id":"15_linear_srgb","number":15,"title":"线性光与 sRGB","summary":"亲眼比较线性值与显示编码。","preview":"canvas","validation":"visual","prerequisite":"14_blinn_phong"},
-        {"id":"16_fresnel","number":16,"title":"Fresnel 边缘光","summary":"根据观察角度点亮轮廓。","preview":"spatial_sphere","validation":"visual","prerequisite":"15_linear_srgb"},
-        {"id":"17_anisotropy","number":17,"title":"各向异性高光","summary":"让高光沿切线方向伸展。","preview":"spatial_sphere","validation":"visual_manual","prerequisite":"16_fresnel"},
-        {"id":"18_hemisphere_include","number":18,"title":"半球光与 Include","summary":"复用可测试的光照函数。","preview":"spatial_sphere","validation":"visual_contract","prerequisite":"17_anisotropy"},
-        {"id":"19_normal_mapping","number":19,"title":"程序化法线","summary":"在切线空间制造细小表面变化。","preview":"spatial_sphere","validation":"visual","prerequisite":"18_hemisphere_include"}
+        {"id":"11_material_channels","number":11,"title":"材质通道","title_en":"Material Channels","summary":"控制基础色、粗糙度和金属度。","summary_en":"Control base color, roughness, and metallic response.","preview":"spatial_sphere","validation":"visual_contract","prerequisite":"10_custom_matrix"},
+        {"id":"12_lambert","number":12,"title":"Lambert","title_en":"Lambert","summary":"从点积开始实现漫反射。","summary_en":"Implement diffuse lighting from a dot product.","preview":"spatial_sphere","validation":"visual","prerequisite":"11_material_channels"},
+        {"id":"13_dot_probe","number":13,"title":"点积探针","title_en":"Dot Product Probe","summary":"把夹角关系显示为灰度。","summary_en":"Display angular relationships as grayscale.","preview":"spatial_sphere","validation":"visual","prerequisite":"12_lambert"},
+        {"id":"14_blinn_phong","number":14,"title":"Blinn-Phong","title_en":"Blinn–Phong","summary":"使用半程向量建立高光。","summary_en":"Build highlights with the halfway vector.","preview":"spatial_sphere","validation":"visual","prerequisite":"13_dot_probe"},
+        {"id":"15_linear_srgb","number":15,"title":"线性光与 sRGB","title_en":"Linear Light and sRGB","summary":"亲眼比较线性值与显示编码。","summary_en":"Compare linear values with display encoding.","preview":"canvas","validation":"visual","prerequisite":"14_blinn_phong"},
+        {"id":"16_fresnel","number":16,"title":"Fresnel 边缘光","title_en":"Fresnel Rim Light","summary":"根据观察角度点亮轮廓。","summary_en":"Light the silhouette according to view angle.","preview":"spatial_sphere","validation":"visual","prerequisite":"15_linear_srgb"},
+        {"id":"17_anisotropy","number":17,"title":"各向异性高光","title_en":"Anisotropic Highlights","summary":"让高光沿切线方向伸展。","summary_en":"Stretch highlights along the tangent direction.","preview":"spatial_sphere","validation":"visual_manual","prerequisite":"16_fresnel"},
+        {"id":"18_hemisphere_include","number":18,"title":"半球光与 Include","title_en":"Hemisphere Light and ShaderInclude","summary":"复用可测试的光照函数。","summary_en":"Reuse a testable lighting function.","preview":"spatial_sphere","validation":"visual_contract","prerequisite":"17_anisotropy"},
+        {"id":"19_normal_mapping","number":19,"title":"程序化法线","title_en":"Procedural Normals","summary":"在切线空间制造细小表面变化。","summary_en":"Create small surface changes in tangent space.","preview":"spatial_sphere","validation":"visual","prerequisite":"18_hemisphere_include"}
       ]
     },
     {
       "id": "m3_procedural",
       "number": 3,
       "title": "程序化图形与动画",
+      "title_en": "Procedural Graphics and Animation",
       "subtitle": "不用贴图也能组织形状与运动",
       "exercises": [
-        {"id":"20_sdf_shapes","number":20,"title":"SDF 基元","summary":"组合圆和矩形距离场。","preview":"canvas","validation":"visual","prerequisite":"19_normal_mapping"},
-        {"id":"21_procedural_character","number":21,"title":"程序化角色","summary":"把多个距离场组织成表情。","preview":"canvas","validation":"visual","prerequisite":"20_sdf_shapes"},
-        {"id":"22_time_animation","number":22,"title":"时间信号","summary":"用 TIME 驱动稳定的周期变化。","preview":"canvas","validation":"visual","prerequisite":"21_procedural_character"},
-        {"id":"23_vertex_deformation","number":23,"title":"顶点波","summary":"在顶点阶段制造连续波形。","preview":"spatial_plane","validation":"visual","prerequisite":"22_time_animation"},
-        {"id":"24_ui_sweep","number":24,"title":"UI 扫光","summary":"构造循环移动的界面高光。","preview":"canvas","validation":"visual","prerequisite":"23_vertex_deformation"},
-        {"id":"25_rotation_matrix","number":25,"title":"旋转矩阵","summary":"以矩阵表达绕轴旋转。","preview":"spatial_cube","validation":"visual","prerequisite":"24_ui_sweep"},
-        {"id":"26_quaternion","number":26,"title":"四元数旋转","summary":"用轴角四元数替代欧拉角组合。","preview":"spatial_cube","validation":"visual_manual","prerequisite":"25_rotation_matrix"}
+        {"id":"20_sdf_shapes","number":20,"title":"SDF 基元","title_en":"SDF Primitives","summary":"组合圆和矩形距离场。","summary_en":"Combine circle and rectangle distance fields.","preview":"canvas","validation":"visual","prerequisite":"19_normal_mapping"},
+        {"id":"21_procedural_character","number":21,"title":"程序化角色","title_en":"Procedural Character","summary":"把多个距离场组织成表情。","summary_en":"Organize several distance fields into a face.","preview":"canvas","validation":"visual","prerequisite":"20_sdf_shapes"},
+        {"id":"22_time_animation","number":22,"title":"时间信号","title_en":"Time Signal","summary":"用 TIME 驱动稳定的周期变化。","summary_en":"Drive stable periodic motion with TIME.","preview":"canvas","validation":"visual","prerequisite":"21_procedural_character"},
+        {"id":"23_vertex_deformation","number":23,"title":"顶点波","title_en":"Vertex Wave","summary":"在顶点阶段制造连续波形。","summary_en":"Create a continuous wave in the vertex stage.","preview":"spatial_plane","validation":"visual","prerequisite":"22_time_animation"},
+        {"id":"24_ui_sweep","number":24,"title":"UI 扫光","title_en":"UI Sweep","summary":"构造循环移动的界面高光。","summary_en":"Build a looping interface highlight.","preview":"canvas","validation":"visual","prerequisite":"23_vertex_deformation"},
+        {"id":"25_rotation_matrix","number":25,"title":"旋转矩阵","title_en":"Rotation Matrix","summary":"以矩阵表达绕轴旋转。","summary_en":"Express axis rotation with matrices.","preview":"spatial_cube","validation":"visual","prerequisite":"24_ui_sweep"},
+        {"id":"26_quaternion","number":26,"title":"四元数旋转","title_en":"Quaternion Rotation","summary":"用轴角四元数替代欧拉角组合。","summary_en":"Replace Euler composition with axis-angle quaternions.","preview":"spatial_cube","validation":"visual_manual","prerequisite":"25_rotation_matrix"}
       ]
     },
     {
       "id": "m4_vfx",
       "number": 4,
       "title": "高级 VFX",
+      "title_en": "Advanced VFX",
       "subtitle": "开始处理整张画面、透明度和深度",
       "exercises": [
-        {"id":"27_gameboy_post","number":27,"title":"Game Boy 后处理","summary":"像素化屏幕并量化为四色。","preview":"post","validation":"visual","prerequisite":"26_quaternion"},
-        {"id":"28_shadertoy_port","number":28,"title":"Shadertoy 移植","summary":"修正坐标、宽高比与时间约定。","preview":"canvas","validation":"visual","prerequisite":"27_gameboy_post"},
-        {"id":"29_distance_fade","number":29,"title":"距离渐隐","summary":"让透明度响应相机距离。","preview":"spatial_sphere","validation":"visual_manual","prerequisite":"28_shadertoy_port"},
-        {"id":"30_ray_marching","number":30,"title":"光线步进","summary":"在片元阶段追踪隐式表面。","preview":"canvas","validation":"visual","prerequisite":"29_distance_fade"},
-        {"id":"31_stencil_portal","number":31,"title":"模板传送门","summary":"协调模板写入、读取和深度关系。","preview":"stencil","validation":"manual_contract","prerequisite":"30_ray_marching"}
+        {"id":"27_gameboy_post","number":27,"title":"Game Boy 后处理","title_en":"Game Boy Post-Process","summary":"像素化屏幕并量化为四色。","summary_en":"Pixelate the screen and quantize it to four colors.","preview":"post","validation":"visual","prerequisite":"26_quaternion"},
+        {"id":"28_shadertoy_port","number":28,"title":"Shadertoy 移植","title_en":"Shadertoy Port","summary":"修正坐标、宽高比与时间约定。","summary_en":"Correct coordinate, aspect-ratio, and time conventions.","preview":"canvas","validation":"visual","prerequisite":"27_gameboy_post"},
+        {"id":"29_distance_fade","number":29,"title":"距离渐隐","title_en":"Distance Fade","summary":"让透明度响应相机距离。","summary_en":"Make Alpha respond to camera distance.","preview":"spatial_sphere","validation":"visual_manual","prerequisite":"28_shadertoy_port"},
+        {"id":"30_ray_marching","number":30,"title":"光线步进","title_en":"Ray Marching","summary":"在片元阶段追踪隐式表面。","summary_en":"Trace an implicit surface in the fragment stage.","preview":"canvas","validation":"visual","prerequisite":"29_distance_fade"},
+        {"id":"31_stencil_portal","number":31,"title":"模板传送门","title_en":"Stencil Portal","summary":"协调模板写入、读取和深度关系。","summary_en":"Coordinate stencil writes, reads, and depth.","preview":"stencil","validation":"manual_contract","prerequisite":"30_ray_marching"}
       ]
     },
     {
       "id": "m5_capstone",
       "number": 5,
       "title": "综合挑战",
+      "title_en": "Capstone Challenge",
       "subtitle": "把独立技巧组织成一个有意图的效果",
       "exercises": [
-        {"id":"32_signal_storm","number":32,"title":"信号风暴","summary":"组合顶点脉动、Fresnel 和程序化溶解。","preview":"spatial_sphere","validation":"visual_manual","prerequisite":"31_stencil_portal"}
+        {"id":"32_signal_storm","number":32,"title":"信号风暴","title_en":"Signal Storm","summary":"组合顶点脉动、Fresnel 和程序化溶解。","summary_en":"Combine vertex pulsing, Fresnel, and procedural dissolve.","preview":"spatial_sphere","validation":"visual_manual","prerequisite":"31_stencil_portal"}
       ]
     },
     {
       "id": "m6_textures",
       "number": 6,
       "title": "程序化纹理扩展",
+      "title_en": "Procedural Texture Extensions",
       "subtitle": "从可复现随机到噪声、细胞和纹理采样",
       "exercises": [
-        {"id":"33_hash_random","number":33,"title":"可复现随机","summary":"用 UV 网格和 hash 函数生成稳定随机值。","preview":"canvas","validation":"visual","prerequisite":"20_sdf_shapes"},
-        {"id":"34_value_noise","number":34,"title":"Value Noise","summary":"插值网格角点，得到连续的灰度噪声。","preview":"canvas","validation":"visual","prerequisite":"33_hash_random"},
-        {"id":"35_voronoi_cells","number":35,"title":"Voronoi 细胞","summary":"搜索邻近特征点，把距离场组织成细胞结构。","preview":"canvas","validation":"visual","prerequisite":"34_value_noise"},
-        {"id":"36_fbm_layers","number":36,"title":"fBm 分形叠层","summary":"叠加多个频率和振幅，得到有尺度感的纹理。","preview":"canvas","validation":"visual","prerequisite":"35_voronoi_cells"},
-        {"id":"37_texture_sample","number":37,"title":"纹理采样","summary":"读取屏幕纹理，理解 sampler2D 与 UV 采样。","preview":"post","validation":"visual_contract","prerequisite":"36_fbm_layers"},
-        {"id":"38_uv_warp","number":38,"title":"UV 扰动","summary":"先扰动采样坐标，再把噪声用于画面变形。","preview":"post","validation":"visual_contract","prerequisite":"37_texture_sample"}
+        {"id":"33_hash_random","number":33,"title":"可复现随机","title_en":"Reproducible Randomness","summary":"用 UV 网格和 hash 函数生成稳定随机值。","summary_en":"Generate stable random values from a UV grid and hash function.","preview":"canvas","validation":"visual","prerequisite":"20_sdf_shapes"},
+        {"id":"34_value_noise","number":34,"title":"Value Noise","title_en":"Value Noise","summary":"插值网格角点，得到连续的灰度噪声。","summary_en":"Interpolate grid corners into continuous grayscale noise.","preview":"canvas","validation":"visual","prerequisite":"33_hash_random"},
+        {"id":"35_voronoi_cells","number":35,"title":"Voronoi 细胞","title_en":"Voronoi Cells","summary":"搜索邻近特征点，把距离场组织成细胞结构。","summary_en":"Search nearby feature points and organize distance into cells.","preview":"canvas","validation":"visual","prerequisite":"34_value_noise"},
+        {"id":"36_fbm_layers","number":36,"title":"fBm 分形叠层","title_en":"fBm Fractal Layers","summary":"叠加多个频率和振幅，得到有尺度感的纹理。","summary_en":"Layer frequencies and amplitudes into a multi-scale texture.","preview":"canvas","validation":"visual","prerequisite":"35_voronoi_cells"},
+        {"id":"37_texture_sample","number":37,"title":"纹理采样","title_en":"Texture Sampling","summary":"读取屏幕纹理，理解 sampler2D 与 UV 采样。","summary_en":"Read a screen texture and understand sampler2D and UV sampling.","preview":"post","validation":"visual_contract","prerequisite":"36_fbm_layers"},
+        {"id":"38_uv_warp","number":38,"title":"UV 扰动","title_en":"UV Warp","summary":"先扰动采样坐标，再把噪声用于画面变形。","summary_en":"Disturb sample coordinates and use noise to warp the image.","preview":"post","validation":"visual_contract","prerequisite":"37_texture_sample"}
       ]
     }
   ]

@@ -48,7 +48,7 @@ static func _flush_section(result: Dictionary, heading: String, lines: PackedStr
 	if heading.is_empty():
 		return
 	var body := "\n".join(lines).strip_edges()
-	var kind := "hint" if heading.begins_with("提示") else "body"
+	var kind := "hint" if heading.begins_with("提示") or heading.begins_with("Hint") else "body"
 	var section := {"heading": heading, "body": body, "kind": kind}
 	result.sections.append(section)
 	if kind == "hint":

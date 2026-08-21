@@ -58,12 +58,23 @@ func backup_to(directory: String) -> bool:
 
 
 func reset_all(default_exercise_id: String, default_prep_id: String = "") -> bool:
+	var onboarding_seen := has_seen_onboarding()
 	var previous_data := data
 	data = _new_data(default_exercise_id, default_prep_id)
+	data["onboarding_seen"] = onboarding_seen
 	if save():
 		return true
 	data = previous_data
 	return false
+
+
+func has_seen_onboarding() -> bool:
+	return bool(data.get("onboarding_seen", false))
+
+
+func mark_onboarding_seen() -> void:
+	data["onboarding_seen"] = true
+	save()
 
 
 func set_current(exercise_id: String, track: String = "main") -> void:
@@ -121,6 +132,7 @@ func _new_data(default_exercise_id: String, default_prep_id: String) -> Dictiona
 		"prep_completed": [],
 		"hints_revealed": {},
 		"prep_hints_revealed": {},
+		"onboarding_seen": false,
 		"started_at": now,
 		"updated_at": now
 	}
@@ -146,6 +158,7 @@ func _normalize(default_exercise_id: String, default_prep_id: String) -> void:
 		data["hints_revealed"] = {}
 	if not (data.get("prep_hints_revealed", {}) is Dictionary):
 		data["prep_hints_revealed"] = {}
+	data["onboarding_seen"] = bool(data.get("onboarding_seen", false))
 	if not data.has("started_at"):
 		data["started_at"] = Time.get_datetime_string_from_system(true)
 

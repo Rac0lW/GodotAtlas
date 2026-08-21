@@ -34,6 +34,13 @@ function Assert-ProgressiveHints([string]$Id, [string]$Readme) {
     Assert-Course ($hintBlocks.Count -eq 3 -and $emptyHints.Count -eq 0) "$Id hints must contain text under every hint heading."
 }
 
+function Assert-EnglishLesson([string]$Id, [string]$Readme) {
+    Assert-Course ($Readme -match '(?m)^# .+') "$Id English README must contain a title."
+    $hintBlocks = [regex]::Matches($Readme, '(?ms)^## Hint [123]\s*\r?\n(.*?)(?=^## |\z)')
+    $emptyHints = @($hintBlocks | Where-Object { $_.Groups[1].Value.Trim().Length -eq 0 })
+    Assert-Course ($hintBlocks.Count -eq 3 -and $emptyHints.Count -eq 0) "$Id English README must contain three non-empty hints."
+}
+
 Assert-Course ($catalog.schema_version -eq 1) 'catalog schema_version must be 1.'
 Assert-Course ($checks.schema_version -eq 1) 'checks schema_version must be 1.'
 Assert-Course ($prepCatalog.schema_version -eq 1) 'prep catalog schema_version must be 1.'
@@ -75,7 +82,8 @@ foreach ($entry in $entries) {
         (Join-Path $exerciseDir 'README.md'),
         (Join-Path $exerciseDir 'exercise.gdshader'),
         (Join-Path $exerciseDir 'starter.gdshader.txt'),
-        (Join-Path $root "solutions\$id.gdshader")
+        (Join-Path $root "solutions\$id.gdshader"),
+        (Join-Path $exerciseDir 'README.en.md')
     )
     foreach ($path in $required) {
         Assert-Course (Test-Path -LiteralPath $path -PathType Leaf) "Missing file: $path"
@@ -89,6 +97,10 @@ foreach ($entry in $entries) {
         if ($id -eq 'prep_01_output') {
             Assert-Course ($readme -match 'vec4\(\s*0\.12,\s*0\.78,\s*0\.72,\s*1\.0\)') 'prep_01_output README must state the numeric RGBA target.'
         }
+    }
+
+    if (Test-Path -LiteralPath $required[4]) {
+        Assert-EnglishLesson $id (Get-Content -Raw -Encoding UTF8 -LiteralPath $required[4])
     }
 
     if ((Test-Path -LiteralPath $required[2]) -and (Test-Path -LiteralPath $required[3])) {
@@ -129,7 +141,8 @@ foreach ($entry in $prepEntries) {
         (Join-Path $exerciseDir 'README.md'),
         (Join-Path $exerciseDir 'exercise.gdshader'),
         (Join-Path $exerciseDir 'starter.gdshader.txt'),
-        (Join-Path $root "prep\solutions\$id.gdshader")
+        (Join-Path $root "prep\solutions\$id.gdshader"),
+        (Join-Path $exerciseDir 'README.en.md')
     )
     $rule = $prepChecks.exercises.PSObject.Properties[$id].Value
     Assert-Course ($rule.mode -eq $entry.validation) "$id catalog validation does not match prep checks mode."
@@ -148,6 +161,10 @@ foreach ($entry in $prepEntries) {
             Assert-Course ($readme -match 'UV\.x\s*=\s*0\.5') 'prep_06_step_smooth README must include a concrete midpoint sample.'
             Assert-Course ($readme -match '\(1\.0,\s*0\.5,\s*0\.18,\s*1\.0\)') 'prep_06_step_smooth README must state the midpoint RGBA value.'
         }
+    }
+
+    if (Test-Path -LiteralPath $required[4]) {
+        Assert-EnglishLesson $id (Get-Content -Raw -Encoding UTF8 -LiteralPath $required[4])
     }
 
     if ((Test-Path -LiteralPath $required[2]) -and (Test-Path -LiteralPath $required[3])) {
